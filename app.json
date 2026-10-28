@@ -1,0 +1,30 @@
+{
+  "id": "56d9f3ee-04f1-4dc9-9d41-8ac99216275b",
+  "name": "Pharma Data Migration",
+  "publisher": "Navione",
+  "version": "1.0.0.30",
+  "brief": "Product Group and Item Family fields for pharmaceutical data migration.",
+  "description": "Per-tenant extension adding Product Group and Item Family classification to Item, for RapidStart Configuration Package migration of pharmaceutical client data.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "dependencies": [],
+  "screenshots": [],
+  "platform": "24.0.0.0",
+  "application": "24.0.0.0",
+  "idRanges": [
+    {
+      "from": 90000,
+      "to": 90199
+    }
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  },
+  "runtime": "13.0",
+  "target": "Cloud"
+}

@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Solution GNC Ventes – Description des modules</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  :root { --ink: #1c2631; --muted: #5b6672; --line: #d9e0e6; --accent: #0f6b63; --soft: #e8f3f1; --warn: #a1680f; --warnsoft: #fbf3e4; --crit: #b3392f; --critsoft: #fcefed; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: var(--ink); margin: 0; }
+  h1 { font-size: 26pt; margin: 0 0 6pt; color: var(--accent); letter-spacing: -.01em; }
+  h2 { font-size: 16pt; margin: 0 0 8pt; padding-bottom: 4pt; border-bottom: 2px solid var(--accent); color: var(--ink); }
+  h3 { font-size: 12pt; margin: 14pt 0 5pt; color: var(--accent); }
+  h4 { font-size: 10.5pt; margin: 10pt 0 3pt; }
+  p { margin: 0 0 6pt; }
+  ul, ol { margin: 0 0 6pt; padding-left: 16pt; }
+  li { margin-bottom: 2pt; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 8pt; font-size: 9.5pt; page-break-inside: avoid; }
+  th { background: var(--soft); text-align: left; padding: 4pt 6pt; border: 1px solid var(--line); }
+  td { padding: 4pt 6pt; border: 1px solid var(--line); vertical-align: top; }
+  .section { page-break-before: always; }
+  .cover { height: 245mm; display: flex; flex-direction: column; justify-content: space-between; }
+  .cover .band { background: var(--accent); color: #fff; padding: 22pt 24pt; border-radius: 6pt; }
+  .cover .band h1 { color: #fff; font-size: 30pt; }
+  .cover .band p { font-size: 13pt; opacity: .95; margin: 0; }
+  .meta { font-size: 10pt; color: var(--muted); }
+  .meta td { border: 0; padding: 2pt 8pt 2pt 0; }
+  .box { border: 1px solid var(--line); border-left: 4px solid var(--accent); background: #f7faf9; padding: 7pt 10pt; margin: 6pt 0 8pt; border-radius: 3pt; page-break-inside: avoid; }
+  .box.warn { border-left-color: var(--warn); background: var(--warnsoft); }
+  .box.crit { border-left-color: var(--crit); background: var(--critsoft); }
+  .box b:first-child { display: block; margin-bottom: 2pt; }
+  .tag { display: inline-block; font-size: 8.5pt; padding: 0 5pt; border-radius: 3pt; background: var(--soft); color: var(--accent); font-weight: 600; }
+  .tag.warn { background: var(--warnsoft); color: var(--warn); }
+  .flow { display: flex; flex-wrap: wrap; gap: 4pt; align-items: center; margin: 6pt 0 10pt; font-size: 9.5pt; }
+  .flow span { background: var(--soft); color: var(--accent); padding: 3pt 8pt; border-radius: 10pt; font-weight: 600; }
+  .flow em { font-style: normal; color: var(--muted); }
+  .toc td { border: 0; border-bottom: 1px dotted var(--line); padding: 3pt 4pt; }
+  .small { font-size: 9pt; color: var(--muted); }
+  .two { display: flex; gap: 12pt; } .two > div { flex: 1; }
+  code { font-family: Consolas, monospace; font-size: 9pt; background: #f1f4f6; padding: 0 3pt; border-radius: 2pt; }
+</style>
+</head>
+<body>
+
+<!-- ===================== Couverture ===================== -->
+<div class="cover">
+  <div>
+    <div class="band">
+      <h1>Solution GNC Ventes</h1>
+      <p>Description détaillée des modules · Business Central</p>
+    </div>
+    <p style="margin-top:18pt;font-size:12pt">Ce document explique, module par module, ce que fait l'extension GNC dans Business Central : à quoi sert chaque module, comment il fonctionne pas à pas, où le trouver dans BC, comment le paramétrer, et les points encore à valider.</p>
+  </div>
+  <table class="meta">
+    <tr><td><b>Client</b></td><td>GNC (Gulf Neocare) – distribution pharmaceutique</td></tr>
+    <tr><td><b>Intégrateur</b></td><td>Navione</td></tr>
+    <tr><td><b>Directeur de projet</b></td><td>M. Hosni Jaouahdou</td></tr>
+    <tr><td><b>Cheffe de projet / développeuse</b></td><td>Haifa Brahmi</td></tr>
+    <tr><td><b>Extension</b></td><td>« Pharma Data Migration », version 1.0.0.30</td></tr>
+    <tr><td><b>Environnement</b></td><td>GNCSANDBOX (environnement de test)</td></tr>
+    <tr><td><b>Date</b></td><td>27 octobre 2026</td></tr>
+    <tr><td><b>Référence</b></td><td>FRD Ventes GNC, version 0.1</td></tr>
+  </table>
+</div>
+
+<!-- ===================== Sommaire ===================== -->
+<div class="section">
+  <h2>Sommaire</h2>
+  <table class="toc">
+    <tr><td>1. Vue d'ensemble : le parcours d'une vente</td></tr>
+    <tr><td>2. Page d'accueil GNC (Role Center)</td></tr>
+    <tr><td>3. Lot 1 – Fiche client, objectifs client, ventes ratées</td></tr>
+    <tr><td>4. Lot 2 – Commerciaux, PIN, affectations, Request Collection</td></tr>
+    <tr><td>5. Lot 3 – Traçabilité par ligne (demande et commercial)</td></tr>
+    <tr><td>6. Lot 4 – Regroupement des demandes (Requests to Group)</td></tr>
+    <tr><td>7. Lot 5 – Bonus, remise additionnelle et remise MOH</td></tr>
+    <tr><td>8. Lot 6 – Remises (Discount Setup) et magasin par utilisateur</td></tr>
+    <tr><td>9. Lot 7 – Livraison : priorité, chauffeurs, Delivery Plan, carte de tournée</td></tr>
+    <tr><td>10. Écrans visuels : Sales Overview, Customer 360, Price Simulator</td></tr>
+    <tr><td>11. Paramétrage : GNC Sales Setup et User Setup</td></tr>
+    <tr><td>12. Ce qui reste à faire et questions pour le manager</td></tr>
+  </table>
+  <div class="box"><b>Comment lire ce document</b>Chaque module suit le même plan : <b>À quoi ça sert</b> (l'idée), <b>Comment ça marche</b> (pas à pas), <b>Où le trouver dans BC</b>, <b>Paramétrage</b> et <b>Points à valider</b>. Les noms entre guillemets (« Request Collection »…) sont les libellés affichés dans BC, en anglais.</div>
+</div>
+
+<!-- ===================== 1. Vue d'ensemble ===================== -->
+<div class="section">
+  <h2>1. Vue d'ensemble : le parcours d'une vente</h2>
+  <p>Chez GNC, les commerciaux collectent les besoins des pharmacies, hôpitaux et autres clients. Ces besoins deviennent des commandes, puis des livraisons et des factures. La solution suit tout ce parcours et garde à chaque étape la trace de la demande d'origine et du commercial.</p>
+  <div class="flow"><span>Request Collection</span><em>→</em><span>Approbation</span><em>→</em><span>Regroupement</span><em>→</em><span>Commande + bonus + remises</span><em>→</em><span>Plan de livraison</span><em>→</em><span>Expédition</span><em>→</em><span>Facture</span></div>
+  <h3>L'histoire en une page</h3>
+  <ol>
+    <li><b>Le commercial collecte la demande</b> : il crée une « Request Collection » (c'est un devis BC), saisit son <b>PIN</b> pour prouver que c'est lui, choisit le client (seulement ses clients) et les articles (seulement ceux qu'il a le droit de vendre). La <b>remise</b> se met toute seule selon les règles GNC, et il indique l'<b>urgence</b> de la livraison.</li>
+    <li><b>La demande est approuvée</b> (statut <i>Released</i>).</li>
+    <li><b>Le regroupement</b> : toutes les demandes approuvées d'un même client (le même jour) deviennent <b>une seule commande</b>, même si elles viennent de commerciaux différents. Les articles identiques sont cumulés (100 + 20 = 120).</li>
+    <li><b>La commande se complète toute seule</b> : chaque ligne garde sa demande d'origine et son commercial ; une <b>ligne bonus gratuite</b> est ajoutée si une règle existe, avec la remise additionnelle et la remise MOH.</li>
+    <li><b>Le magasin organise la livraison</b> : il voit les commandes les plus urgentes d'abord, choisit un <b>chauffeur</b>, vérifie le stock et la chaîne du froid, puis <b>expédie</b>. Une <b>carte</b> calcule le meilleur ordre de tournée.</li>
+    <li><b>La facture</b> est faite à partir des quantités expédiées. La traçabilité (demande, commercial, bonus, priorité, chauffeur) se retrouve sur l'expédition et la facture.</li>
+  </ol>
+  <h3>Les modules et leur version</h3>
+  <table>
+    <tr><th>Module</th><th>Contenu</th><th>Version</th><th>État</th></tr>
+    <tr><td>Page d'accueil</td><td>Bandeau, tuiles en couleur, raccourcis, listes</td><td>1.0.0.30</td><td>Publié</td></tr>
+    <tr><td>Lot 1</td><td>Fiche client, objectifs client, ventes ratées (Won / Failed)</td><td>1.0.0.3 – 1.0.0.8</td><td>Testé</td></tr>
+    <tr><td>Lot 2</td><td>Commerciaux, PIN, sous-types, affectations, filtres</td><td>1.0.0.5 – 1.0.0.14</td><td>Testé</td></tr>
+    <tr><td>Lot 3</td><td>Demande et commercial par ligne jusqu'à la facture</td><td>1.0.0.15</td><td>Testé (facture en attente)</td></tr>
+    <tr><td>Lot 4</td><td>Regroupement des demandes</td><td>1.0.0.16 / 1.0.0.28</td><td>Testé</td></tr>
+    <tr><td>Lot 5</td><td>Bonus, remise additionnelle, remise MOH</td><td>1.0.0.17 – 1.0.0.19</td><td>Testé</td></tr>
+    <tr><td>Lot 6</td><td>Remises GNC, contrôle des remises, magasin par utilisateur</td><td>1.0.0.20 – 1.0.0.21</td><td>Testé</td></tr>
+    <tr><td>Lot 7</td><td>Priorité, chauffeurs, Delivery Plan, carte de tournée</td><td>1.0.0.22 – 1.0.0.27</td><td>Testé</td></tr>
+    <tr><td>Écrans visuels</td><td>Sales Overview, Customer 360, Price Simulator</td><td>1.0.0.29</td><td>Publié</td></tr>
+    <tr><td>Lot 8</td><td>Rapports</td><td>–</td><td>À faire</td></tr>
+  </table>
+</div>
+
+<!-- ===================== 2. Page d'accueil ===================== -->
+<div class="section">
+  <h2>2. Page d'accueil GNC (Role Center)</h2>
+  <h3>À quoi ça sert</h3>
+  <p>Donner à l'équipe commerciale, en un coup d'œil, ce qui demande une action aujourd'hui, et des raccourcis vers les écrans GNC. La page d'accueil n'utilise que des éléments standard de BC, pour un rendu propre et stable.</p>
+  <h3>Ce qu'on y trouve</h3>
+  <table>
+    <tr><th>Élément</th><th>Contenu</th></tr>
+    <tr><td><b>Barre de liens</b></td><td>Sales Overview, Customers, Request Collection, Requests to Group, Sales Orders, Delivery Plan, Delivery Round, Drivers, factures, articles, objectifs, affectations, Bonus Setup, Discount Setup, Price Simulator. Menus <i>Posted Documents</i> et <i>Setup</i>.</td></tr>
+    <tr><td><b>Bandeau GNC</b></td><td>Messages qui défilent : salutation, « X very urgent order(s) waiting for a driver », « X approved request(s) ready to be grouped », « Sales this month … ». Un message n'apparaît que s'il y a quelque chose à dire. Un clic ouvre l'écran concerné.</td></tr>
+    <tr><td><b>Tuiles par métier</b></td><td><i>Requests</i> (ouvertes, à regrouper, sans PIN), <i>Delivery</i> (à expédier, très urgentes, sans chauffeur), <i>Customers</i> (sans CR No., sans téléphone), <i>Documents</i> (commandes, factures et avoirs non validés).</td></tr>
+    <tr><td><b>Tuiles de montants</b></td><td>Ventes du mois, ventes de l'année, montant des commandes en cours, % de l'objectif des commerciaux.</td></tr>
+    <tr><td><b>Go to</b></td><td>Tuiles d'accès aux écrans : Sales Overview, Requests to Group, Delivery Plan, Delivery Round, Price Simulator, Customers.</td></tr>
+    <tr><td><b>Deux listes</b></td><td><i>Very Urgent Deliveries</i> (chauffeur manquant en rouge, stock en couleur) et <i>Requests Waiting</i> (demande sans PIN en jaune).</td></tr>
+  </table>
+  <div class="box"><b>Code couleur des tuiles</b>Rouge = bloquant, il faut agir (urgence sans chauffeur, clients sans CR No.). Jaune = à surveiller (demandes à regrouper, sans PIN). Vert = rien à faire. Bleu-vert = simple information.</div>
+  <h3>Activation</h3>
+  <p>Chaque utilisateur choisit le profil <b>GNC SALES</b> dans <i>Mes paramètres → Rôle</i>. Les droits sont donnés par l'ensemble d'autorisations <b>GNC SALES</b>.</p>
+</div>
+
+<!-- ===================== 3. Lot 1 ===================== -->
+<div class="section">
+  <h2>3. Lot 1 – Fiche client, objectifs client, ventes ratées</h2>
+  <h3>3.1 Fiche client GNC</h3>
+  <p><b>À quoi ça sert :</b> avoir sur chaque client les informations demandées par le FRD et empêcher de vendre à un client incomplet.</p>
+  <table>
+    <tr><th>Champ (onglet GNC Classification)</th><th>Rôle</th></tr>
+    <tr><td>Customer Type, Area, Line, Business Unit, Division, Region</td><td>Classifications paramétrables (Setup → Customer Classifications).</td></tr>
+    <tr><td>Sector</td><td>Private ou Government. Sert aussi à la remise MOH (lot 5).</td></tr>
+    <tr><td>CR No.</td><td>Registre de commerce. <b>Obligatoire.</b></td></tr>
+    <tr><td>Contact Phone No., Contact E-Mail, Observation</td><td>Contact et remarques.</td></tr>
+    <tr><td>Latitude, Longitude</td><td>Position GPS pour la carte de tournée (lot 7).</td></tr>
+  </table>
+  <p><b>Contrôle :</b> quand on choisit un client sur un document de vente, BC vérifie que le <b>nom</b>, le <b>téléphone</b> et le <b>CR No.</b> sont remplis. Sinon le document est refusé avec un message clair. Le GLN est facultatif (décision du 17/10).</p>
+  <h3>3.2 Objectifs annuels client</h3>
+  <p>Pour chaque client et chaque année, on saisit un objectif. BC calcule le <b>réalisé</b> (ventes HT = factures moins avoirs de l'année) et le <b>%</b>. Accès : fiche client → <i>Annual Targets</i>, ou <i>Customer Targets</i>.</p>
+  <h3>3.3 Ventes ratées (Won / Failed)</h3>
+  <p><b>À quoi ça sert :</b> savoir pourquoi on perd des ventes.</p>
+  <ul>
+    <li>Une demande transformée en commande est archivée avec le statut <b>Won</b>.</li>
+    <li>Une demande perdue est fermée par le bouton <b>Close as Failed</b> : on choisit un <b>motif obligatoire</b> (Setup → Failed Sale Reasons) et un commentaire facultatif. La demande est archivée en <b>Failed</b> et disparaît de la liste.</li>
+    <li>Une demande clôturée peut être <b>restaurée</b> depuis les archives.</li>
+  </ul>
+  <p><b>Paramétrage :</b> GNC Sales Setup → <i>Archive Quote on Make Order</i> (Oui = la demande est toujours archivée en Won lors de la création de la commande).</p>
+  <div class="box warn"><b>Point à traiter</b>493 clients importés n'ont ni CR No. ni téléphone : ils seront refusés sur les documents de vente. Il faut compléter la migration ou assouplir le contrôle (décision du manager).</div>
+</div>
+
+<!-- ===================== 4. Lot 2 ===================== -->
+<div class="section">
+  <h2>4. Lot 2 – Commerciaux, PIN, affectations, Request Collection</h2>
+  <h3>4.1 Commerciaux</h3>
+  <ul>
+    <li><b>Type</b> : Private ou Government. <b>Sous-type</b> selon le type : Pharma, OTC, Medical Device (Private) ; Institution, Tender, Medical Device (Government). Table paramétrable <i>Salesperson Sub-Types</i>.</li>
+    <li><b>PIN personnel</b> sur la fiche commercial (deux commerciaux ne peuvent pas avoir le même).</li>
+    <li><b>Objectif annuel</b> par commercial avec réalisé et % (<i>Salesperson Targets</i>). Réalisé = ventes des écritures client portant ce commercial.</li>
+  </ul>
+  <h3>4.2 Affectations client – commercial – produit</h3>
+  <p>Table <i>Salesperson Assignments</i> : pour un client, quel commercial s'occupe de quel <b>article</b> ou de quelle <b>catégorie</b> d'articles. Un seul commercial par client et par article ; un deuxième commercial passe par une catégorie.</p>
+  <h3>4.3 Request Collection (la demande client)</h3>
+  <p><b>À quoi ça sert :</b> c'est l'écran où le commercial saisit le besoin du client. Techniquement, c'est le <b>devis</b> standard de BC, renommé « Request Collection ».</p>
+  <h4>Comment ça marche</h4>
+  <ol>
+    <li>Le commercial saisit son <b>PIN</b> : le champ Salesperson Code se remplit et n'est plus modifiable à la main. Le PIN n'est jamais enregistré sur le document.</li>
+    <li>La liste des <b>clients</b> ne montre que <b>son portefeuille</b> (clients dont il est le commercial + clients de ses affectations).</li>
+    <li>La liste des <b>articles</b> ne montre que les articles <b>autorisés</b> pour ce client et ce commercial. Un article hors affectation est refusé.</li>
+    <li>La <b>remise</b> est proposée automatiquement (lot 6) et la <b>priorité de livraison</b> est choisie (lot 7).</li>
+    <li><b>Make Order</b> et <b>Send Approval Request</b> sont refusés tant que le commercial n'est pas confirmé par PIN.</li>
+  </ol>
+  <div class="box"><b>Sens de saisie conseillé</b>PIN d'abord, puis client, puis lignes.</div>
+  <h3>4.4 Workflow d'approbation</h3>
+  <p>Le FRD demande que les demandes soient <b>validées</b> avant de devenir des commandes. Le manager a choisi le <b>workflow standard de BC</b> (« Sales Quote Approval Workflow »). C'est du paramétrage, sans code. <span class="tag warn">Reporté</span> Il reste à définir qui approuve.</p>
+</div>
+
+<!-- ===================== 5. Lot 3 ===================== -->
+<div class="section">
+  <h2>5. Lot 3 – Traçabilité par ligne</h2>
+  <h3>À quoi ça sert</h3>
+  <p>Une commande peut regrouper plusieurs demandes de plusieurs commerciaux. Il faut donc savoir, <b>ligne par ligne</b>, de quelle demande elle vient et quel commercial l'a vendue (commissions, objectifs, rapports).</p>
+  <h3>Comment ça marche</h3>
+  <ul>
+    <li>Chaque ligne de commande a deux champs : <b>Request No.</b> (n° de la demande d'origine) et <b>Line Salesperson Code</b> (commercial confirmé par PIN).</li>
+    <li>Ils sont remplis automatiquement lors de la création de la commande et <b>ne sont pas modifiables</b> sur une ligne venue d'une demande.</li>
+    <li>Une ligne ajoutée à la main sur la commande prend le commercial de l'en-tête, modifiable.</li>
+    <li>Les mêmes champs sont recopiés automatiquement sur l'<b>expédition</b>, la <b>facture</b> et l'<b>avoir</b> enregistrés.</li>
+  </ul>
+  <h3>Où le trouver</h3>
+  <p>Colonnes <i>Request No.</i>, <i>Line Salesperson Code</i> et <i>Grouped Requests</i> dans les lignes de commande, d'expédition, de facture et d'avoir.</p>
+  <div class="box warn"><b>Test en attente</b>La facture et l'avoir n'ont pas pu être testés : le compte général 6110 est bloqué dans la sandbox (paramétrage, pas notre code). L'expédition est testée.</div>
+</div>
+
+<!-- ===================== 6. Lot 4 ===================== -->
+<div class="section">
+  <h2>6. Lot 4 – Regroupement des demandes (Requests to Group)</h2>
+  <h3>À quoi ça sert</h3>
+  <p>FRD 1.4 : les demandes d'un même client collectées par différents commerciaux doivent donner <b>une seule commande</b>.</p>
+  <h3>Comment ça marche</h3>
+  <ol>
+    <li>Seules les demandes <b>approuvées</b> (Released), non clôturées, avec un commercial <b>confirmé par PIN</b> sont regroupées. Les autres restent dans la liste et sont signalées.</li>
+    <li>Un groupe = même client, même client facturé, même adresse de livraison, même devise et, selon le réglage, <b>même jour</b>.</li>
+    <li>La première demande (plus petit numéro) donne l'en-tête de la commande ; les lignes des autres sont ajoutées.</li>
+    <li><b>Cumul</b> : même article + variante + unité + magasin + prix + remise + commercial → une seule ligne (100 + 20 = 120). Le détail par demande reste consultable (colonne <i>Grouped Requests</i>).</li>
+    <li>La priorité de la commande est celle de la demande <b>la plus urgente</b>.</li>
+    <li>Les demandes regroupées sont archivées en <b>Won</b>. Message final : « Sales order X created … It groups the requests A, B ».</li>
+  </ol>
+  <h3>L'écran Requests to Group</h3>
+  <p>Écran visuel pleine page : chiffres du jour, règle de regroupement, liste des groupes (client + jour) à gauche ; à droite les demandes avec leur PIN, l'<b>aperçu de la future commande</b> (lignes cumulées en vert, ligne bonus en violet, remises), les contrôles et les boutons <b>Create grouped order</b> / <b>Create all grouped orders</b>. Le bouton <i>List view</i> ouvre la liste classique.</p>
+  <h3>Paramétrage (GNC Sales Setup)</h3>
+  <table>
+    <tr><th>Réglage</th><th>Valeurs</th></tr>
+    <tr><td>Request Grouping</td><td><i>Same Customer and Day</i> (défaut) ou <i>Same Customer (all dates)</i></td></tr>
+    <tr><td>Do Not Merge Identical Lines</td><td>Non (défaut) = cumul ; Oui = une ligne par ligne de demande</td></tr>
+  </table>
+</div>
+
+<!-- ===================== 7. Lot 5 ===================== -->
+<div class="section">
+  <h2>7. Lot 5 – Bonus, remise additionnelle et remise MOH</h2>
+  <h3>À quoi ça sert</h3>
+  <p>Le <b>bonus</b> = des produits <b>offerts</b> au client (« pour 100 boîtes, 5 offertes »). Ils apparaissent sur une ligne séparée et gratuite, pour que le stock baisse correctement et que la facture montre clairement le cadeau.</p>
+  <h3>Bonus Setup (une règle par client + article)</h3>
+  <table>
+    <tr><th>Champ</th><th>Rôle</th></tr>
+    <tr><td>Customer No., Item No.</td><td>Client et article concernés.</td></tr>
+    <tr><td>Bonus Quantity</td><td>Quantité offerte.</td></tr>
+    <tr><td>Minimum Ordered Quantity</td><td>Bonus seulement à partir de cette quantité (0 = toujours).</td></tr>
+    <tr><td>Additional Discount %</td><td>Remise ajoutée à la remise de la ligne commandée.</td></tr>
+    <tr><td>MOH Discount %</td><td>Remise imposée par le ministère, seulement pour les clients <b>Government</b>.</td></tr>
+    <tr><td>Starting Date, Ending Date</td><td>Période de la promotion (facultatif).</td></tr>
+  </table>
+  <h3>Comment ça marche</h3>
+  <ol>
+    <li>À la création de la commande (Make Order ou regroupement), BC cherche une règle pour chaque ligne venue d'une demande.</li>
+    <li>Si la règle s'applique, la remise de la ligne devient : <b>remise + additionnelle + MOH</b> (addition simple, 100 % maximum). Exemple : 10 % + 2 % + 5 % = 17 %.</li>
+    <li>Une <b>ligne bonus</b> est ajoutée juste dessous : même article, quantité offerte, remise 100 %, montant 0, case <i>Bonus Line</i> cochée.</li>
+    <li>Après un regroupement, le bonus est calculé <b>une seule fois</b>, sur la ligne cumulée.</li>
+    <li>La ligne bonus est rattachée à sa ligne : si on supprime la ligne commandée, le bonus part avec elle.</li>
+  </ol>
+  <h3>Protection</h3>
+  <p>Seuls les utilisateurs cochés <b>Allow Edit Bonus Lines</b> (User Setup) peuvent modifier ou supprimer une ligne bonus.</p>
+  <div class="box warn"><b>À confirmer par le manager</b>Définition exacte de la remise MOH (souvenir de Haifa : remise imposée par le ministère, clients Government, taux fixe, additionnée). Le manager a dit de garder le fonctionnement actuel pour le moment.</div>
+</div>
+
+<!-- ===================== 8. Lot 6 ===================== -->
+<div class="section">
+  <h2>8. Lot 6 – Remises et magasin par utilisateur</h2>
+  <h3>8.1 Discount Setup</h3>
+  <p><b>À quoi ça sert :</b> définir les remises GNC aux 4 niveaux du FRD et les proposer automatiquement.</p>
+  <table>
+    <tr><th>Exemple de règle</th><th>Client</th><th>Type</th><th>N°</th><th>Remise</th></tr>
+    <tr><td>Client + article</td><td>PHARMACIE AL AMAL 2</td><td>Item</td><td>1006</td><td>8 %</td></tr>
+    <tr><td>Client, tous les articles</td><td>PHARMACIE AL AMAL 2</td><td>All Items</td><td>–</td><td>5 %</td></tr>
+    <tr><td>Article pour tous les clients</td><td>(vide)</td><td>Item</td><td>1006</td><td>10 %</td></tr>
+    <tr><td>Catégorie pour tous les clients</td><td>(vide)</td><td>Item Category</td><td>OTC</td><td>3 %</td></tr>
+  </table>
+  <h4>Comment ça marche</h4>
+  <ol>
+    <li>Quand le commercial saisit l'article ou change la quantité, BC calcule d'abord sa remise standard, puis cherche une règle GNC.</li>
+    <li>S'il y a une règle GNC, elle remplace la remise standard ; sinon la remise standard reste.</li>
+    <li>Si plusieurs règles correspondent, la <b>priorité</b> choisit : <i>Most Specific</i> (défaut : client + article, puis client + catégorie, puis client, puis article, puis catégorie) ou <i>Highest Discount</i>.</li>
+  </ol>
+  <h3>8.2 Contrôle des remises saisies à la main</h3>
+  <p>Si <i>Control Manual Discount</i> est coché (GNC Sales Setup), un utilisateur ne peut pas mettre une remise supérieure à la fois à la remise proposée et à son maximum personnel (<i>Max Line Discount %</i> dans User Setup).</p>
+  <h3>8.3 Magasin par utilisateur</h3>
+  <p>Dans User Setup, <i>Sales Location Code</i> : le magasin de l'utilisateur. Quand il choisit le client d'une demande, d'une commande ou d'une facture, ce magasin remplace celui du client. Vide = comportement standard.</p>
+  <div class="box warn"><b>Reporté</b>L'approbation des remises exceptionnelles par la direction (REQ-DB-017) viendra avec le workflow d'approbation.</div>
+</div>
+
+<!-- ===================== 9. Lot 7 ===================== -->
+<div class="section">
+  <h2>9. Lot 7 – Livraison</h2>
+  <h3>9.1 Priorité de livraison</h3>
+  <p>Le commercial choisit <b>Normal</b>, <b>Urgent</b> ou <b>Very Urgent</b> sur la demande. La priorité passe sur la commande (la plus urgente gagne lors d'un regroupement), puis sur l'expédition.</p>
+  <h3>9.2 Chauffeurs (Drivers)</h3>
+  <p>Code, nom, téléphone, véhicule, <b>capacité</b> du véhicule et case <b>véhicule frigorifique</b>. Un chauffeur est <b>obligatoire pour expédier</b> une commande, sauf si <i>Driver Optional on Shipment</i> est coché dans GNC Sales Setup.</p>
+  <h3>9.3 Delivery Plan (écran visuel)</h3>
+  <ul>
+    <li>Commandes <b>libérées</b> pas encore complètement expédiées, les plus urgentes d'abord.</li>
+    <li>Chiffres du jour : à livrer, très urgentes, sans chauffeur, problème de stock, chaîne du froid.</li>
+    <li>Cartes des chauffeurs avec la <b>charge du véhicule</b>.</li>
+    <li>Pour la commande choisie : lignes à expédier avec le <b>stock réel</b>, choix du chauffeur et contrôles avant expédition (chauffeur, stock, froid → véhicule frigorifique, téléphone). Le bouton <b>Ship order</b> est bloqué tant qu'il reste un point rouge.</li>
+    <li><i>Shipped today</i> : les expéditions du jour. <i>List view</i> : la liste classique.</li>
+  </ul>
+  <h3>9.4 Carte de tournée (Delivery Round)</h3>
+  <p>Tournée = les commandes d'un <b>chauffeur</b> pour une <b>date</b>. Sur une vraie carte de Riyad (OpenStreetMap), BC calcule l'ordre des arrêts : <b>Very Urgent d'abord</b>, puis le chemin le plus court. Affiche distance, durée, heures d'arrivée, charge, et vérifie les contraintes (froid, capacité, positions GPS). <b>Save sequence</b> enregistre le n° d'arrêt sur chaque commande.</p>
+  <h3>9.5 Chaîne du froid</h3>
+  <p>Case <b>Cold Chain</b> sur la fiche article (vaccins, insuline…). Les commandes avec un article froid demandent un véhicule frigorifique et une livraison rapide.</p>
+  <div class="box"><b>À savoir</b>Les distances de la carte sont des estimations (vol d'oiseau × 1,3). Un calcul d'itinéraire réel demanderait un service payant (Google, Bing). La carte a besoin d'internet.</div>
+</div>
+
+<!-- ===================== 10. Écrans visuels ===================== -->
+<div class="section">
+  <h2>10. Écrans visuels</h2>
+  <p>Ces écrans s'ouvrent en <b>pleine page</b> depuis la barre de liens ou les tuiles <i>Go to</i>. Ils utilisent les vraies données de BC ; un clic sur un chiffre ou une ligne ouvre la page BC correspondante.</p>
+  <h3>10.1 Sales Overview</h3>
+  <ul>
+    <li>Chiffres du jour : demandes ouvertes, à regrouper, commandes à expédier, très urgentes, ventes du mois.</li>
+    <li>Tableau des <b>objectifs des commerciaux</b> avec barre de progression.</li>
+    <li><b>Courbe des ventes par mois</b> : année en cours et année précédente.</li>
+    <li>Chaîne <b>demande → facture</b>, liste <b>Needs attention</b>, demandes gagnées / ratées et motifs d'échec.</li>
+  </ul>
+  <h3>10.2 Customer 360</h3>
+  <p>Bouton <i>Customer 360</i> sur la fiche et la liste client. Contrôles des champs obligatoires, objectif, commandes en cours, demandes gagnées / ratées, solde, ventes par mois, commerciaux (fiche + affectations), remises et bonus du client, motifs d'échec et dernières factures.</p>
+  <h3>10.3 Price Simulator</h3>
+  <p>On saisit client, article, quantité et date. L'écran montre les <b>5 niveaux de remise</b> (la règle appliquée en vert), la <b>règle bonus</b> (minimum atteint ou non), le calcul <b>remise + additionnelle + MOH</b> et le montant de la ligne. Aucun document n'est créé. Le prix utilisé est celui de la fiche article.</p>
+</div>
+
+<!-- ===================== 11. Paramétrage ===================== -->
+<div class="section">
+  <h2>11. Paramétrage</h2>
+  <h3>11.1 GNC Sales Setup</h3>
+  <table>
+    <tr><th>Groupe</th><th>Réglage</th><th>Effet</th></tr>
+    <tr><td>Sales Quotes</td><td>Archive Quote on Make Order</td><td>Archive la demande en Won à la création de la commande.</td></tr>
+    <tr><td rowspan="2">Requests to Group</td><td>Request Grouping</td><td>Même client et même jour, ou même client toutes dates.</td></tr>
+    <tr><td>Do Not Merge Identical Lines</td><td>Désactive le cumul des lignes identiques.</td></tr>
+    <tr><td rowspan="2">Discounts</td><td>Discount Priority</td><td>Most Specific ou Highest Discount.</td></tr>
+    <tr><td>Control Manual Discount</td><td>Limite les remises saisies à la main.</td></tr>
+    <tr><td rowspan="4">Delivery</td><td>Driver Optional on Shipment</td><td>Permet d'expédier sans chauffeur.</td></tr>
+    <tr><td>Warehouse Latitude / Longitude</td><td>Point de départ des tournées (défaut : 2nd Industrial City).</td></tr>
+    <tr><td>Round Start Time</td><td>Heure de départ (défaut 06:30).</td></tr>
+    <tr><td>Average Speed (km/h)</td><td>Vitesse pour les heures d'arrivée (défaut 28).</td></tr>
+  </table>
+  <h3>11.2 User Setup (par utilisateur)</h3>
+  <table>
+    <tr><th>Champ</th><th>Effet</th></tr>
+    <tr><td>Allow Edit Bonus Lines</td><td>Autorise à modifier ou supprimer les lignes bonus.</td></tr>
+    <tr><td>Max Line Discount %</td><td>Remise maximum saisie à la main (si le contrôle est activé).</td></tr>
+    <tr><td>Sales Location Code</td><td>Magasin mis automatiquement sur les documents de l'utilisateur.</td></tr>
+  </table>
+  <div class="box warn"><b>Attention dans la sandbox</b>Une autre extension Navione exige un <i>Default Bank Account</i> dès qu'un utilisateur a une ligne dans User Setup.</div>
+  <h3>11.3 Tables de paramétrage</h3>
+  <p>Customer Classifications, Failed Sale Reasons, Salesperson Sub-Types, Salesperson Assignments, Customer Targets, Salesperson Targets, Bonus Setup, Discount Setup, Drivers.</p>
+</div>
+
+<!-- ===================== 12. Reste à faire ===================== -->
+<div class="section">
+  <h2>12. Ce qui reste à faire et questions pour le manager</h2>
+  <h3>12.1 Reste à développer</h3>
+  <p><b>Lot 8 – Rapports</b> (FRD) : ventes en devis, proforma, facturées, par produit, par client, par région, par période, et réalisé contre objectif par commercial. Avant de coder, il faut choisir le format (Excel, imprimable ou écrans d'analyse BC).</p>
+  <h3>12.2 Tests en attente</h3>
+  <ul>
+    <li>Facture et avoir (lot 3) : compte 6110 bloqué dans la sandbox.</li>
+    <li>Contrôle du PIN au <i>Send Approval Request</i> : quand le workflow sera activé.</li>
+    <li>Regroupement Normal + Very Urgent (lot 7) : la commande doit devenir Very Urgent.</li>
+  </ul>
+  <h3>12.3 Questions pour le manager</h3>
+  <table>
+    <tr><th>#</th><th>Question</th></tr>
+    <tr><td>1</td><td>PIN : garder <b>GNC PIN</b> ou utiliser le champ <b>PWD</b> de l'autre extension Navione ?</td></tr>
+    <tr><td>2</td><td>Workflow : <b>qui approuve</b> les demandes ? Toutes, ou au-dessus d'un montant ?</td></tr>
+    <tr><td>3</td><td>Remise MOH : confirmer la définition, les clients concernés et l'ordre de calcul.</td></tr>
+    <tr><td>4</td><td>Stock : diminue à l'<b>expédition</b> (standard BC) ou à la <b>facture</b> (phrase du FRD) ?</td></tr>
+    <tr><td>5</td><td>493 clients importés sans CR No. ni téléphone : compléter ou assouplir le contrôle ?</td></tr>
+    <tr><td>6</td><td>Débloquer le compte 6110, ou fournir une <b>sandbox GNC propre</b> ?</td></tr>
+    <tr><td>7</td><td>Rapports (lot 8) : quel format ? Que signifie « Proforma » chez GNC ?</td></tr>
+    <tr><td>8</td><td>Faut-il un avertissement de doublon par article (même article déjà demandé pour le même client) ?</td></tr>
+  </table>
+  <h3>12.4 Avant la mise en production</h3>
+  <p>Supprimer toutes les données de test : clients de test, demandes, commandes, règles de bonus et de remise de test, chauffeur D01, coordonnées GPS de test, objectifs fictifs.</p>
+  <p class="small" style="margin-top:20pt">Document préparé pour l'équipe Navione · Solution GNC Ventes · version 1.0.0.30 · 27 octobre 2026.</p>
+</div>
+
+</body>
+</html>

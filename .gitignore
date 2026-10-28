@@ -1,0 +1,11 @@
+# Fichiers compilés et symboles (régénérés par VS Code / alc.exe)
+*.app
+.alpackages/
+.snapshots/
+.altestrunner/
+.vscode/.alcache/
+.vscode/rad.json
+
+# Fichiers locaux de l'assistant (paramètres personnels, configuration MCP)
+.claude/
+Claude outputs/

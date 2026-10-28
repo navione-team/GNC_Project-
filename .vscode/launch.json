@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "NAVIONE Pharma Migration - GNCSANDBOX",
+            "request": "launch",
+            "type": "al",
+            "tenant": "59b78d9d-73b6-4473-8ae2-33e65238f4d9",
+            "environmentType": "Sandbox",
+            "environmentName": "GNCSANDBOX",
+            "startupObjectId": 90020,
+            "startupObjectType": "Page",
+            "breakOnError": "All",
+            "schemaUpdateMode": "Synchronize",
+            "launchBrowser": true,
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true
+        }
+    ]
+}
