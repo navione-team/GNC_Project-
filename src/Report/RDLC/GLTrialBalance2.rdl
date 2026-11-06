@@ -1,0 +1,317 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:SecurityType>None</rd:SecurityType>
+    </DataSource>
+  </DataSources>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <Height>2in</Height>
+        <Style />
+      </Body>
+      <Width>6.5in</Width>
+      <Page>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+  <rd:ReportID>0eeb6585-38ae-40f1-885b-8d50088d51b4</rd:ReportID>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Fields>
+        <Field Name="TodayFormatted">
+          <DataField>TodayFormatted</DataField>
+        </Field>
+        <Field Name="CompanyName">
+          <DataField>CompanyName</DataField>
+        </Field>
+        <Field Name="PreviousStartDateText">
+          <DataField>PreviousStartDateText</DataField>
+        </Field>
+        <Field Name="PageCaption">
+          <DataField>PageCaption</DataField>
+        </Field>
+        <Field Name="UserCaption">
+          <DataField>UserCaption</DataField>
+        </Field>
+        <Field Name="GLAccTableCaptionFilter">
+          <DataField>GLAccTableCaptionFilter</DataField>
+        </Field>
+        <Field Name="Filter">
+          <DataField>Filter</DataField>
+        </Field>
+        <Field Name="FiscalYearStatusText">
+          <DataField>FiscalYearStatusText</DataField>
+        </Field>
+        <Field Name="SimulationEntriesCaption">
+          <DataField>SimulationEntriesCaption</DataField>
+        </Field>
+        <Field Name="GLEntryFilter">
+          <DataField>GLEntryFilter</DataField>
+        </Field>
+        <Field Name="No_GLAcc">
+          <DataField>No_GLAcc</DataField>
+        </Field>
+        <Field Name="Name_GLAcc">
+          <DataField>Name_GLAcc</DataField>
+        </Field>
+        <Field Name="GLAcc2DebitAmtCreditAmt">
+          <DataField>GLAcc2DebitAmtCreditAmt</DataField>
+        </Field>
+        <Field Name="GLAcc2DebitAmtCreditAmtFormat">
+          <DataField>GLAcc2DebitAmtCreditAmtFormat</DataField>
+        </Field>
+        <Field Name="GLAcc2CreditAmtDebitAmt">
+          <DataField>GLAcc2CreditAmtDebitAmt</DataField>
+        </Field>
+        <Field Name="GLAcc2CreditAmtDebitAmtFormat">
+          <DataField>GLAcc2CreditAmtDebitAmtFormat</DataField>
+        </Field>
+        <Field Name="DebitAmt_GLAcc">
+          <DataField>DebitAmt_GLAcc</DataField>
+        </Field>
+        <Field Name="DebitAmt_GLAccFormat">
+          <DataField>DebitAmt_GLAccFormat</DataField>
+        </Field>
+        <Field Name="CreditAmt_GLAcc">
+          <DataField>CreditAmt_GLAcc</DataField>
+        </Field>
+        <Field Name="CreditAmt_GLAccFormat">
+          <DataField>CreditAmt_GLAccFormat</DataField>
+        </Field>
+        <Field Name="BalAtEndingDateDebitCaption">
+          <DataField>BalAtEndingDateDebitCaption</DataField>
+        </Field>
+        <Field Name="BalAtEndingDateDebitCaptionFormat">
+          <DataField>BalAtEndingDateDebitCaptionFormat</DataField>
+        </Field>
+        <Field Name="BalAtEndingDateCreditCaption">
+          <DataField>BalAtEndingDateCreditCaption</DataField>
+        </Field>
+        <Field Name="BalAtEndingDateCreditCaptionFormat">
+          <DataField>BalAtEndingDateCreditCaptionFormat</DataField>
+        </Field>
+        <Field Name="TLAccType">
+          <DataField>TLAccType</DataField>
+        </Field>
+        <Field Name="GLTrialBalCaption">
+          <DataField>GLTrialBalCaption</DataField>
+        </Field>
+        <Field Name="NoCaption">
+          <DataField>NoCaption</DataField>
+        </Field>
+        <Field Name="NameCaption">
+          <DataField>NameCaption</DataField>
+        </Field>
+        <Field Name="BalAtStartingDateCaption">
+          <DataField>BalAtStartingDateCaption</DataField>
+        </Field>
+        <Field Name="BalDateRangeCaption">
+          <DataField>BalDateRangeCaption</DataField>
+        </Field>
+        <Field Name="BalAtEndingdateCaption">
+          <DataField>BalAtEndingdateCaption</DataField>
+        </Field>
+        <Field Name="DebitCaption">
+          <DataField>DebitCaption</DataField>
+        </Field>
+        <Field Name="CreditCaption">
+          <DataField>CreditCaption</DataField>
+        </Field>
+        <Field Name="TypeAccount">
+          <DataField>TypeAccount</DataField>
+        </Field>
+        <Field Name="TotalMouvDebit">
+          <DataField>TotalMouvDebit</DataField>
+        </Field>
+        <Field Name="TotalMouvDebitFormat">
+          <DataField>TotalMouvDebitFormat</DataField>
+        </Field>
+        <Field Name="TotalMouvCredit">
+          <DataField>TotalMouvCredit</DataField>
+        </Field>
+        <Field Name="TotalMouvCreditFormat">
+          <DataField>TotalMouvCreditFormat</DataField>
+        </Field>
+        <Field Name="TotalDebit">
+          <DataField>TotalDebit</DataField>
+        </Field>
+        <Field Name="TotalDebitFormat">
+          <DataField>TotalDebitFormat</DataField>
+        </Field>
+        <Field Name="TotalCredit">
+          <DataField>TotalCredit</DataField>
+        </Field>
+        <Field Name="TotalCreditFormat">
+          <DataField>TotalCreditFormat</DataField>
+        </Field>
+        <Field Name="TotBalanceDebit">
+          <DataField>TotBalanceDebit</DataField>
+        </Field>
+        <Field Name="TotBalanceDebitFormat">
+          <DataField>TotBalanceDebitFormat</DataField>
+        </Field>
+        <Field Name="TotBalanceCredit">
+          <DataField>TotBalanceCredit</DataField>
+        </Field>
+        <Field Name="TotBalanceCreditFormat">
+          <DataField>TotBalanceCreditFormat</DataField>
+        </Field>
+        <Field Name="CompanyAdr">
+          <DataField>CompanyAdr</DataField>
+        </Field>
+        <Field Name="CompanyCode">
+          <DataField>CompanyCode</DataField>
+        </Field>
+        <Field Name="CompanyCity">
+          <DataField>CompanyCity</DataField>
+        </Field>
+        <Field Name="CompanyFax">
+          <DataField>CompanyFax</DataField>
+        </Field>
+        <Field Name="CompanyPhone">
+          <DataField>CompanyPhone</DataField>
+        </Field>
+        <Field Name="CompanyVAT">
+          <DataField>CompanyVAT</DataField>
+        </Field>
+        <Field Name="TotBilanDebit">
+          <DataField>TotBilanDebit</DataField>
+        </Field>
+        <Field Name="TotBilanDebitFormat">
+          <DataField>TotBilanDebitFormat</DataField>
+        </Field>
+        <Field Name="TotBilanCredit">
+          <DataField>TotBilanCredit</DataField>
+        </Field>
+        <Field Name="TotBilanCreditFormat">
+          <DataField>TotBilanCreditFormat</DataField>
+        </Field>
+        <Field Name="TotCompteBilanDebit">
+          <DataField>TotCompteBilanDebit</DataField>
+        </Field>
+        <Field Name="TotCompteBilanDebitFormat">
+          <DataField>TotCompteBilanDebitFormat</DataField>
+        </Field>
+        <Field Name="TotCompteBilanCredit">
+          <DataField>TotCompteBilanCredit</DataField>
+        </Field>
+        <Field Name="TotCompteBilanCreditFormat">
+          <DataField>TotCompteBilanCreditFormat</DataField>
+        </Field>
+        <Field Name="TotMovBilanDebit">
+          <DataField>TotMovBilanDebit</DataField>
+        </Field>
+        <Field Name="TotMovBilanDebitFormat">
+          <DataField>TotMovBilanDebitFormat</DataField>
+        </Field>
+        <Field Name="TotMovBilanCredit">
+          <DataField>TotMovBilanCredit</DataField>
+        </Field>
+        <Field Name="TotMovBilanCreditFormat">
+          <DataField>TotMovBilanCreditFormat</DataField>
+        </Field>
+        <Field Name="TotalSoldeBilanDebit">
+          <DataField>TotalSoldeBilanDebit</DataField>
+        </Field>
+        <Field Name="TotalSoldeBilanDebitFormat">
+          <DataField>TotalSoldeBilanDebitFormat</DataField>
+        </Field>
+        <Field Name="TotalSoldeBilanCredit">
+          <DataField>TotalSoldeBilanCredit</DataField>
+        </Field>
+        <Field Name="TotalSoldeBilanCreditFormat">
+          <DataField>TotalSoldeBilanCreditFormat</DataField>
+        </Field>
+        <Field Name="TotGestionDebit">
+          <DataField>TotGestionDebit</DataField>
+        </Field>
+        <Field Name="TotGestionDebitFormat">
+          <DataField>TotGestionDebitFormat</DataField>
+        </Field>
+        <Field Name="TotGestionCredit">
+          <DataField>TotGestionCredit</DataField>
+        </Field>
+        <Field Name="TotGestionCreditFormat">
+          <DataField>TotGestionCreditFormat</DataField>
+        </Field>
+        <Field Name="TotMovGestionDebit">
+          <DataField>TotMovGestionDebit</DataField>
+        </Field>
+        <Field Name="TotMovGestionDebitFormat">
+          <DataField>TotMovGestionDebitFormat</DataField>
+        </Field>
+        <Field Name="TotMovGestionCredit">
+          <DataField>TotMovGestionCredit</DataField>
+        </Field>
+        <Field Name="TotMovGestionCreditFormat">
+          <DataField>TotMovGestionCreditFormat</DataField>
+        </Field>
+        <Field Name="TotalSoldeGestionDebit">
+          <DataField>TotalSoldeGestionDebit</DataField>
+        </Field>
+        <Field Name="TotalSoldeGestionDebitFormat">
+          <DataField>TotalSoldeGestionDebitFormat</DataField>
+        </Field>
+        <Field Name="TotalSoldeGestionCredit">
+          <DataField>TotalSoldeGestionCredit</DataField>
+        </Field>
+        <Field Name="TotalSoldeGestionCreditFormat">
+          <DataField>TotalSoldeGestionCreditFormat</DataField>
+        </Field>
+        <Field Name="AccountType">
+          <DataField>AccountType</DataField>
+        </Field>
+      </Fields>
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+    </DataSet>
+  </DataSets>
+</Report>

@@ -53,6 +53,13 @@ table 90067 "GNC Discount Setup"
             MinValue = 0;
             MaxValue = 100;
         }
+        // FRD : remise possible selon la quantité commandée. 0 = pas de minimum
+        field(7; "Minimum Quantity"; Decimal)
+        {
+            Caption = 'Minimum Quantity';
+            DecimalPlaces = 0 : 5;
+            MinValue = 0;
+        }
         // Champs calculés pour l'affichage
         field(10; "Customer Name"; Text[100])
         {

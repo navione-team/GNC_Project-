@@ -6,5 +6,10 @@ permissionset 90030 "NAVIONE PHARMA MIG"
     Permissions = tabledata "Product Group" = RIMD,
                   tabledata "Item Family" = RIMD,
                   page "Product Group List" = X,
-                  page "Item Family List" = X;
+                  table WithholdingTaxTypes = X,
+                  tabledata WithholdingTaxTypes = RMID,
+                  page "Item Family List" = X,
+                  codeunit "NAV Customer Sales Unit" = X;
+
+
 }

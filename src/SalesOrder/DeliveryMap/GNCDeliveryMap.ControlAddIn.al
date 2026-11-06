@@ -1,5 +1,6 @@
 // Lot 7 – Carte de la tournée de livraison (control add-in JavaScript affiché dans la page 90083).
-// Carte réelle OpenStreetMap avec la bibliothèque Leaflet (chargée depuis unpkg, besoin d'internet).
+// Carte réelle OpenStreetMap avec la bibliothèque Leaflet (chargée depuis unpkg, besoin d'internet),
+// ou Google Maps si une clé est saisie dans GNC Sales Setup (chargé par DeliveryMap.js).
 // BC envoie la tournée (LoadRound) ; la page JavaScript calcule l'ordre des arrêts (urgences d'abord,
 // puis le plus court) et renvoie à BC l'ordre choisi (SaveSequence) ou la commande à ouvrir (OpenOrder).
 controladdin "GNC Delivery Map"
@@ -25,6 +26,12 @@ controladdin "GNC Delivery Map"
     event OpenOrder(OrderNo: Text);
     // L'utilisateur enregistre l'ordre des arrêts : n° de commandes séparés par des virgules
     event SaveSequence(OrderNos: Text);
+    // L'utilisateur ouvre un itinéraire Google Maps
+    event OpenUrl(Url: Text);
+    // Position trouvée par Google pour un arrêt
+    event SavePosition(OrderNo: Text; Latitude: Text; Longitude: Text);
+    // Recherche terminée : BC recharge la tournée
+    event PositionsSaved();
 
     // Données de la tournée (chauffeur, dépôt, arrêts) au format JSON
     procedure LoadRound(Data: JsonObject);

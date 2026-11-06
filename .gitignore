@@ -9,3 +9,6 @@
 # Fichiers locaux de l'assistant (paramètres personnels, configuration MCP)
 .claude/
 Claude outputs/
+
+# Archives envoyées par e-mail
+*.zip

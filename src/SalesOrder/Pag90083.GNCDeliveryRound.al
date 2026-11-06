@@ -75,6 +75,23 @@ page 90083 "GNC Delivery Round"
                     begin
                         GNCDeliveryRoundMgt.SaveSequence(OrderNos);
                     end;
+
+                    trigger OpenUrl(Url: Text)
+                    begin
+                        Hyperlink(Url);
+                    end;
+
+                    trigger SavePosition(OrderNo: Text; Latitude: Text; Longitude: Text)
+                    var
+                        GNCDeliveryRoundMgt: Codeunit "GNC Delivery Round Mgt.";
+                    begin
+                        GNCDeliveryRoundMgt.SavePosition(OrderNo, Latitude, Longitude);
+                    end;
+
+                    trigger PositionsSaved()
+                    begin
+                        LoadMap();
+                    end;
                 }
             }
         }

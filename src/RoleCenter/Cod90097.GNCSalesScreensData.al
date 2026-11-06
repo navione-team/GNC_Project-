@@ -193,9 +193,10 @@ codeunit 90097 "GNC Sales Screens Data"
     end;
 
     // Demandes archivées Won / Failed (CustomerNo vide = tous les clients ; FromDate vide = toutes les dates)
-    local procedure CountArchivedQuotes(CustomerNo: Code[20]; QuoteStatus: Enum "GNC Quote Status"; FromDate: Date; ToDate: Date): Integer
+    local procedure CountArchivedQuotes(CustomerNo: Code[20]; QuoteStatus: Enum "GNC Quote Status"; FromDate: Date; ToDate: Date) Result: Integer
     var
         SalesHeaderArchive: Record "Sales Header Archive";
+        GNCSalesQuoteMgt: Codeunit "GNC Sales Quote Mgt.";
     begin
         SalesHeaderArchive.SetRange("Document Type", SalesHeaderArchive."Document Type"::Quote);
         SalesHeaderArchive.SetRange("GNC Quote Status", QuoteStatus);
@@ -203,7 +204,12 @@ codeunit 90097 "GNC Sales Screens Data"
             SalesHeaderArchive.SetRange("Sell-to Customer No.", CustomerNo);
         if FromDate <> 0D then
             SalesHeaderArchive.SetRange("Date Archived", FromDate, ToDate);
-        exit(SalesHeaderArchive.Count());
+        // Une demande compte une seule fois, avec le résultat de sa dernière version
+        if SalesHeaderArchive.FindSet() then
+            repeat
+                if GNCSalesQuoteMgt.IsLastQuoteOutcome(SalesHeaderArchive) then
+                    Result += 1;
+            until SalesHeaderArchive.Next() = 0;
     end;
 
     // Motifs des ventes ratées, du plus fréquent au moins fréquent
@@ -211,6 +217,7 @@ codeunit 90097 "GNC Sales Screens Data"
     var
         SalesHeaderArchive: Record "Sales Header Archive";
         FailedSaleReason: Record "GNC Failed Sale Reason";
+        GNCSalesQuoteMgt: Codeunit "GNC Sales Quote Mgt.";
         Counts: Dictionary of [Text, Integer];
         Names: List of [Text];
         Reason: JsonObject;
@@ -227,16 +234,19 @@ codeunit 90097 "GNC Sales Screens Data"
             SalesHeaderArchive.SetRange("Date Archived", FromDate, ToDate);
         if SalesHeaderArchive.FindSet() then
             repeat
-                ReasonName := NoReasonTxt;
-                if FailedSaleReason.Get(SalesHeaderArchive."GNC Failed Reason Code") then
-                    ReasonName := FailedSaleReason.Description;
-                if ReasonName = '' then
-                    ReasonName := SalesHeaderArchive."GNC Failed Reason Code";
-                if Counts.Get(ReasonName, Count) then
-                    Counts.Set(ReasonName, Count + 1)
-                else begin
-                    Counts.Add(ReasonName, 1);
-                    Names.Add(ReasonName);
+                // Une demande compte une seule fois, avec le motif de sa dernière version
+                if GNCSalesQuoteMgt.IsLastQuoteOutcome(SalesHeaderArchive) then begin
+                    ReasonName := NoReasonTxt;
+                    if FailedSaleReason.Get(SalesHeaderArchive."GNC Failed Reason Code") then
+                        ReasonName := FailedSaleReason.Description;
+                    if ReasonName = '' then
+                        ReasonName := SalesHeaderArchive."GNC Failed Reason Code";
+                    if Counts.Get(ReasonName, Count) then
+                        Counts.Set(ReasonName, Count + 1)
+                    else begin
+                        Counts.Add(ReasonName, 1);
+                        Names.Add(ReasonName);
+                    end;
                 end;
             until SalesHeaderArchive.Next() = 0;
 
@@ -451,7 +461,7 @@ codeunit 90097 "GNC Sales Screens Data"
         GeneralLedgerSetup.Get();
         IsGovernment := Customer."GNC Sector" = Customer."GNC Sector"::Government;
 
-        GNCDiscountMgt.GetDiscountLadder(CustomerNo, ItemNo, SimulationDate, Ladder, WinnerIndex, BasePct);
+        GNCDiscountMgt.GetDiscountLadder(CustomerNo, ItemNo, SimulationDate, Quantity, Ladder, WinnerIndex, BasePct);
 
         // Bonus : règle qui existe à cette date ? quantité minimum atteinte ?
         if GNCBonusMgt.FindBonusRule(CustomerNo, ItemNo, SimulationDate, 999999999, BonusSetup) then begin

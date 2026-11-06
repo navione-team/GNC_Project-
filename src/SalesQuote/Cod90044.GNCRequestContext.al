@@ -12,6 +12,19 @@ codeunit 90044 "GNC Request Context"
     var
         CurrentSalespersonCode: Code[20];
         CurrentCustomerNo: Code[20];
+        GroupingRequestNo: Code[20];
+
+    // Demande en cours de regroupement : son Make Order est permis par le codeunit 90056.
+    // On retient son numéro : après une erreur, les autres demandes restent contrôlées.
+    procedure SetGroupingRequest(RequestNo: Code[20])
+    begin
+        GroupingRequestNo := RequestNo;
+    end;
+
+    procedure GetGroupingRequest(): Code[20]
+    begin
+        exit(GroupingRequestNo);
+    end;
 
     procedure SetContext(SalespersonCode: Code[20]; CustomerNo: Code[20])
     begin

@@ -28,5 +28,11 @@ tableextension 90063 "GNC User Setup" extends "User Setup"
             DataClassification = CustomerContent;
             TableRelation = Location.Code where("Use As In-Transit" = const(false));
         }
+        // REQ-DB-017 : l'utilisateur peut approuver les remises exceptionnelles (codeunit 90069)
+        field(90103; "GNC Approve Excep. Discounts"; Boolean)
+        {
+            Caption = 'Approve Exceptional Discounts';
+            DataClassification = CustomerContent;
+        }
     }
 }

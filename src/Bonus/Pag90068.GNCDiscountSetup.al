@@ -41,6 +41,10 @@ page 90068 "GNC Discount Setup"
                 {
                     ToolTip = 'Specifies the line discount % suggested on the request and sales order lines.';
                 }
+                field("Minimum Quantity"; Rec."Minimum Quantity")
+                {
+                    ToolTip = 'Specifies the minimum quantity on the line for the discount to apply. Leave 0 if there is no minimum.';
+                }
                 field("Starting Date"; Rec."Starting Date")
                 {
                     ToolTip = 'Specifies the first date of the discount (order date). Leave empty if there is no start date.';

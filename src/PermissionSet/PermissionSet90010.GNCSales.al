@@ -69,5 +69,19 @@ permissionset 90010 "GNC SALES"
                   page "GNC Sales Headline" = X,
                   page "GNC Urgent Deliveries Part" = X,
                   page "GNC Waiting Requests Part" = X,
-                  codeunit "GNC Role Center Mgt." = X;
+                  codeunit "GNC Role Center Mgt." = X,
+                  table "GNC Sales Report Buffer" = X,
+                  codeunit "GNC Sales Report Data" = X,
+                  report "GNC Sales by Product" = X,
+                  report "GNC Sales by Customer" = X,
+                  report "GNC Sales by Region" = X,
+                  report "GNC Sales by Period" = X,
+                  report "GNC Quoted Sales" = X,
+                  report "GNC Proforma Sales" = X,
+                  report "GNC Invoiced Sales" = X,
+                  report "GNC Salesperson Achievement" = X,
+                  report "GNC Tax Invoice" = X,
+                  report "GNC Sales Order" = X,
+                  report "GNC Credit Note" = X,
+                  codeunit "GNC Sales Doc. Print Mgt." = X;
 }

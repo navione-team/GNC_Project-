@@ -89,6 +89,28 @@ table 90037 "GNC Sales Setup"
             DecimalPlaces = 0 : 1;
             MinValue = 0;
         }
+        // FRD 1.4 : Non par défaut = Make Order refusé si d'autres demandes validées sont à regrouper avec celle-ci
+        field(21; "Allow Individual Make Order"; Boolean)
+        {
+            Caption = 'Allow Make Order on Groupable Requests';
+        }
+        // FRD règle commerciaux n° 4 : Oui = PIN refusé si le commercial n'a pas d'objectif pour l'année de la date de travail
+        field(22; "Require Salesperson Target"; Boolean)
+        {
+            Caption = 'Require Salesperson Annual Target';
+        }
+        // REQ-DB-017 : Oui = remise au-dessus du maximum acceptée, mais à approuver avant Release. Avec "Control Manual Discount"
+        field(23; "Exceptional Discount Approval"; Boolean)
+        {
+            Caption = 'Exceptional Discount Approval';
+        }
+        // Vide = carte OpenStreetMap et distances estimées. La clé est envoyée au navigateur :
+        // elle doit être limitée au site de Business Central dans la console Google.
+        field(24; "Google Maps API Key"; Text[100])
+        {
+            Caption = 'Google Maps API Key';
+            ExtendedDatatype = Masked;
+        }
     }
 
     keys

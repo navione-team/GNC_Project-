@@ -45,6 +45,19 @@ tableextension 90045 "GNC Sales Line" extends "Sales Line"
             DataClassification = CustomerContent;
             Editable = false;
         }
+        // REQ-DB-017 : remise saisie au-dessus de ce qui est permis, à approuver avant Release (codeunit 90069)
+        field(90009; "GNC Exceptional Discount"; Boolean)
+        {
+            Caption = 'Exceptional Discount';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(90010; "GNC Discount Approved By"; Code[50])
+        {
+            Caption = 'Discount Approved By';
+            DataClassification = EndUserIdentifiableInformation;
+            Editable = false;
+        }
     }
 
     var

@@ -66,10 +66,29 @@ pageextension 90016 "GNC Sales Quote" extends "Sales Quote"
                         CurrPage.Close();
                 end;
             }
+            // REQ-DB-017 : approbation des remises exceptionnelles de la demande
+            action(GNCApproveDiscounts)
+            {
+                ApplicationArea = All;
+                Caption = 'Approve Exceptional Discounts';
+                Image = Approve;
+                ToolTip = 'Approve the exceptional line discounts of this request, so that it can be released.';
+
+                trigger OnAction()
+                var
+                    GNCDiscountMgt: Codeunit "GNC Discount Mgt.";
+                begin
+                    GNCDiscountMgt.ApproveExceptionalDiscounts(Rec);
+                    CurrPage.Update(false);
+                end;
+            }
         }
         addafter(MakeOrder_Promoted)
         {
             actionref(GNCCloseAsFailed_Promoted; GNCCloseAsFailed)
+            {
+            }
+            actionref(GNCApproveDiscounts_Promoted; GNCApproveDiscounts)
             {
             }
         }

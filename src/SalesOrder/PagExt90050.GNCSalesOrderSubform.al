@@ -29,6 +29,17 @@ pageextension 90050 "GNC Sales Order Subform" extends "Sales Order Subform"
                 ApplicationArea = All;
                 ToolTip = 'Specifies that the line is a free bonus line (100% discount) added automatically from the bonus setup. It is attached to the ordered line.';
             }
+            // REQ-DB-017 : remise exceptionnelle et approbateur (remplis par le codeunit 90069)
+            field("GNC Exceptional Discount"; Rec."GNC Exceptional Discount")
+            {
+                ApplicationArea = All;
+                ToolTip = 'Specifies that the line discount is above the maximum allowed. The order cannot be released until the discount is approved.';
+            }
+            field("GNC Discount Approved By"; Rec."GNC Discount Approved By")
+            {
+                ApplicationArea = All;
+                ToolTip = 'Specifies the user who approved the exceptional line discount. It is cleared when the discount is changed.';
+            }
         }
     }
 

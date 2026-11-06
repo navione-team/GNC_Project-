@@ -7,6 +7,8 @@ codeunit 90036 "GNC Salesperson PIN Mgt."
 {
     var
         InvalidPINErr: Label 'The PIN is not valid.';
+        TypeMissingErr: Label 'Salesperson %1 has no type. Select Private or Government on the salesperson card.', Comment = '%1 = salesperson code';
+        TargetMissingErr: Label 'Salesperson %1 has no annual target for %2. Enter it in Salesperson Targets.', Comment = '%1 = salesperson code, %2 = year';
         PINNotConfirmedErr: Label 'The salesperson of quote %1 has not been confirmed. The salesperson must enter their PIN on the quote.', Comment = '%1 = quote number';
 
     // Appelée par le champ "Salesperson PIN" de la fiche devis.
@@ -14,6 +16,8 @@ codeunit 90036 "GNC Salesperson PIN Mgt."
     procedure ApplyPIN(var SalesHeader: Record "Sales Header"; PIN: Text)
     var
         Salesperson: Record "Salesperson/Purchaser";
+        SalespersonTarget: Record "GNC Salesperson Target";
+        GNCSalesSetup: Record "GNC Sales Setup";
         GNCRequestCollectionMgt: Codeunit "GNC Request Collection Mgt.";
     begin
         if PIN = '' then
@@ -21,6 +25,14 @@ codeunit 90036 "GNC Salesperson PIN Mgt."
         Salesperson.SetRange("GNC PIN", PIN);
         if not Salesperson.FindFirst() then
             Error(InvalidPINErr);
+
+        // FRD commerciaux, règles 1 et 4 : type obligatoire, objectif annuel selon le paramètre
+        if Salesperson."GNC Type" = Salesperson."GNC Type"::" " then
+            Error(TypeMissingErr, Salesperson.Code);
+        GNCSalesSetup.GetSetup();
+        if GNCSalesSetup."Require Salesperson Target" then
+            if not SalespersonTarget.Get(Salesperson.Code, Date2DMY(WorkDate(), 3)) then
+                Error(TargetMissingErr, Salesperson.Code, Date2DMY(WorkDate(), 3));
 
         // Le client déjà saisi doit être dans le portefeuille du commercial,
         // et les articles déjà saisis doivent lui être affectés (codeunit 90043)

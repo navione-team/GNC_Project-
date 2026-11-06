@@ -25,6 +25,13 @@ pageextension 90051 "GNC Posted Sales Shpt. Subform" extends "Posted Sales Shpt.
                 ApplicationArea = All;
                 ToolTip = 'Specifies that the line is a free bonus line.';
             }
+            // REQ-DB-014 : ligne commandée dont vient le bonus
+            field(GNCAttachedToLineNo; Rec."Attached to Line No.")
+            {
+                ApplicationArea = All;
+                Caption = 'Attached to Line No.';
+                ToolTip = 'Specifies the number of the ordered line that this bonus line comes from.';
+            }
         }
     }
 }

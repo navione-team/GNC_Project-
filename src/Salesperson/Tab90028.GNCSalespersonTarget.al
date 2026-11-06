@@ -46,20 +46,15 @@ table 90028 "GNC Salesperson Target"
         }
     }
 
-    // Ventes réalisées (HT, devise société) du commercial sur l'année :
-    // somme de "Sales (LCY)" des écritures client portant ce commercial (factures - avoirs).
-    // PROVISOIRE : le commercial lu est celui de l'EN-TÊTE du document (standard BC).
-    // Question ouverte (CLAUDE.md) : à l'étape 4, faudra-t-il compter par LIGNE de commande ?
+    // Ventes réalisées (HT, devise société) du commercial sur l'année, factures - avoirs,
+    // PAR LIGNE : une commande groupée crédite chaque commercial de ses propres lignes (FRD 1.5).
     procedure GetActualSalesLCY(): Decimal
     var
-        CustLedgerEntry: Record "Cust. Ledger Entry";
+        GNCSalesReportData: Codeunit "GNC Sales Report Data";
     begin
         if ("Salesperson Code" = '') or (Year = 0) then
             exit(0);
-        CustLedgerEntry.SetRange("Salesperson Code", "Salesperson Code");
-        CustLedgerEntry.SetRange("Posting Date", DMY2Date(1, 1, Year), DMY2Date(31, 12, Year));
-        CustLedgerEntry.CalcSums("Sales (LCY)");
-        exit(CustLedgerEntry."Sales (LCY)");
+        exit(GNCSalesReportData.GetSalespersonSalesLCY("Salesperson Code", DMY2Date(1, 1, Year), DMY2Date(31, 12, Year)));
     end;
 
     // Pourcentage de réalisation = réalisé / objectif x 100 (0 si pas d'objectif)

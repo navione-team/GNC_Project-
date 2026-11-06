@@ -1,11 +1,19 @@
 // Lot 7 – Carte de la tournée de livraison (control add-in "GNC Delivery Map").
 // Reçoit la tournée de BC (LoadRound), calcule l'ordre des arrêts : groupes de priorité
 // (Very Urgent, puis Urgent, puis Normal), plus proche voisin puis amélioration 2-opt dans chaque groupe.
-// Distances : vol d'oiseau (formule de Haversine) x 1,3 pour approcher la distance par la route.
+// Distances pour choisir l'ordre : vol d'oiseau (formule de Haversine) x 1,3.
+// Avec une clé Google Maps (GNC Sales Setup) : carte Google, distances et durées par la route (Directions),
+// recherche des positions manquantes (Geocoder). Sans clé ou si la clé est refusée : carte OpenStreetMap et estimation.
 var GNCDeliveryMap = (function () {
   var PRIO_ORDER = ["Very Urgent", "Urgent", "Normal"];
   var ROAD_FACTOR = 1.3;
+  var MAX_GOOGLE_STOPS = 25, MAX_LINK_STOPS = 9;
   var root, map, layers, data, route = [], noCoords = [], showEntry = true, highlighted = null, savedOrder = false;
+  var engine = null, gmap, directions, geocoder, gOverlays = [], roads = {}, mapNote = "", geocoding = false;
+
+  // Trajet par la route déjà reçu de Google pour cette suite d'arrêts (sinon undefined)
+  function seqKey(seq) { return seq.map(function (s) { return s.orderNo; }).join(","); }
+  function road(seq) { var r = roads[seqKey(seq)]; return r && r.km !== undefined ? r : undefined; }
 
   function invoke(name, args) { Microsoft.Dynamics.NAV.InvokeExtensibilityMethod(name, args); }
 
@@ -17,6 +25,8 @@ var GNCDeliveryMap = (function () {
     return 2 * R * Math.asin(Math.sqrt(h)) * ROAD_FACTOR;
   }
   function routeKm(seq) {
+    var r = road(seq);
+    if (r) return r.km;
     var total = 0, prev = data.warehouse;
     seq.forEach(function (s) { total += km(prev, s); prev = s; });
     return seq.length ? total + km(prev, data.warehouse) : 0;
@@ -57,9 +67,9 @@ var GNCDeliveryMap = (function () {
   // ---------- Horaires ----------
   function serviceMin(s) { return 8 + (s.coldUnits > 0 ? 5 : 0); } // déchargement : 8 min, +5 min si froid
   function schedule(seq) {
-    var t = data.startMinutes, prev = data.warehouse, rows = [];
-    seq.forEach(function (s) { t += km(prev, s) / data.speed * 60; rows.push({ s: s, eta: t }); t += serviceMin(s); prev = s; });
-    if (seq.length) t += km(prev, data.warehouse) / data.speed * 60;
+    var t = data.startMinutes, prev = data.warehouse, rows = [], r = road(seq);
+    seq.forEach(function (s, i) { t += r ? r.legs[i] : km(prev, s) / data.speed * 60; rows.push({ s: s, eta: t }); t += serviceMin(s); prev = s; });
+    if (seq.length) t += r ? r.legs[seq.length] : km(prev, data.warehouse) / data.speed * 60;
     return { rows: rows, end: t };
   }
   function hhmm(m) { m = Math.round(m); return String(Math.floor(m / 60) % 24).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); }
@@ -82,7 +92,9 @@ var GNCDeliveryMap = (function () {
       '<div class="gnc-panel"><h3>Stop sequence</h3>' +
       '<div class="gnc-tools"><button type="button" class="gnc-btn primary" id="gReopt">Re-optimise</button>' +
       '<button type="button" class="gnc-btn" id="gSave">Save sequence</button>' +
-      '<button type="button" class="gnc-btn" id="gEntry">Hide order-entry route</button></div>' +
+      '<button type="button" class="gnc-btn" id="gEntry">Hide order-entry route</button>' +
+      '<button type="button" class="gnc-btn" id="gNav">Open route in Google Maps</button>' +
+      '<button type="button" class="gnc-btn" id="gGeo">Find missing positions</button></div>' +
       '<div id="gNote"></div><ol class="gnc-stops" id="gStops"></ol></div>' +
       '<div class="gnc-mapwrap"><div id="gncMap"></div><div class="gnc-constraints" id="gCons"></div>' +
       '<div class="gnc-legend"><span><i></i>Optimised round <b id="gLgOpt"></b></span><span><i class="entry"></i>Order-entry sequence <b id="gLgEntry"></b></span><span><i class="c"></i>Cold chain stop</span></div></div>' +
@@ -98,22 +110,112 @@ var GNCDeliveryMap = (function () {
       e.currentTarget.textContent = showEntry ? "Hide order-entry route" : "Show order-entry route";
       render(false);
     });
+    document.getElementById("gNav").addEventListener("click", function () { invoke("OpenUrl", [routeUrl()]); });
+    document.getElementById("gGeo").addEventListener("click", findMissingPositions);
+  }
 
+  // ---------- Choix de la carte ----------
+  function setupLeaflet() {
+    var box = document.getElementById("gncMap");
+    box.innerHTML = "";
     if (typeof L !== "undefined") {
       map = L.map("gncMap", { zoomControl: true }).setView([24.7136, 46.6753], 11); // Riyad
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 18, attribution: "&copy; OpenStreetMap contributors"
       }).addTo(map);
       layers = L.layerGroup().addTo(map);
+      engine = "leaflet";
     } else {
-      document.getElementById("gncMap").appendChild(el("div", "gnc-empty", "The map could not be loaded (no internet access to OpenStreetMap). The stop sequence still works."));
+      engine = "none";
+      box.appendChild(el("div", "gnc-empty", "The map could not be loaded (no internet access to OpenStreetMap). The stop sequence still works."));
     }
+  }
+
+  // Clé refusée ou Google inaccessible : on revient à OpenStreetMap
+  function googleFailed(message) {
+    if (engine === "leaflet") return;
+    gOverlays.forEach(function (o) { o.setMap(null); });
+    gOverlays = []; gmap = null; directions = null; geocoder = null; roads = {};
+    mapNote = message;
+    setupLeaflet();
+    if (data) { render(true); fitMap(); }
+  }
+
+  function setupGoogle(key) {
+    engine = "loading";
+    window.gm_authFailure = function () { googleFailed("Google Maps refused the API key: OpenStreetMap is shown instead. Check the key in GNC Sales Setup."); };
+    window.GNCGoogleReady = function () {
+      gmap = new google.maps.Map(document.getElementById("gncMap"), { center: { lat: 24.7136, lng: 46.6753 }, zoom: 11 });
+      directions = new google.maps.DirectionsService();
+      geocoder = new google.maps.Geocoder();
+      engine = "google";
+      render(true);
+      fitMap();
+    };
+    var script = document.createElement("script");
+    script.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(key) + "&callback=GNCGoogleReady";
+    script.async = true;
+    script.onerror = function () { googleFailed("Google Maps could not be loaded: OpenStreetMap is shown instead."); };
+    document.head.appendChild(script);
+  }
+
+  function fitMap() {
+    if (!data) return;
+    var pts = route.map(function (s) { return { lat: s.lat, lng: s.lng }; }).concat([{ lat: data.warehouse.lat, lng: data.warehouse.lng }]);
+    if (engine === "leaflet") {
+      map.fitBounds(pts.map(function (p) { return [p.lat, p.lng]; }), { padding: [40, 40] });
+      setTimeout(function () { map.invalidateSize(); }, 200);
+    } else if (engine === "google") {
+      var bounds = new google.maps.LatLngBounds();
+      pts.forEach(function (p) { bounds.extend(p); });
+      gmap.fitBounds(bounds, 40);
+    }
+  }
+
+  // ---------- Navigation (liens Google Maps, sans clé) ----------
+  function pos(p) { return p.lat + "," + p.lng; }
+  function routeUrl() {
+    var depot = pos(data.warehouse);
+    return "https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=" + depot + "&destination=" + depot +
+      "&waypoints=" + encodeURIComponent(route.map(pos).join("|"));
+  }
+  function stopUrl(s) { return "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pos(s); }
+
+  // ---------- Recherche des positions manquantes (Google Geocoder) ----------
+  function findMissingPositions() {
+    if (!geocoder || geocoding) return;
+    var todo = noCoords.slice(), found = 0, missed = [];
+    geocoding = true;
+    function next() {
+      if (!todo.length) {
+        geocoding = false;
+        mapNote = found + " position(s) found: check each stop on the map." + (missed.length ? " Not found: " + missed.join(", ") + "." : "");
+        if (found) invoke("PositionsSaved", []); else render(false);
+        return;
+      }
+      var s = todo.shift();
+      geocoder.geocode({ address: [s.address, s.city, s.country].filter(Boolean).join(", ") }, function (res, status) {
+        if (status === "OK" && res.length) {
+          var p = res[0].geometry.location;
+          invoke("SavePosition", [s.orderNo, String(p.lat()), String(p.lng())]);
+          found++;
+        } else {
+          missed.push(s.customer);
+        }
+        setTimeout(next, 250);
+      });
+    }
+    next();
   }
 
   // ---------- Données reçues de BC ----------
   function load(d) {
     data = d;
     data.speed = data.speed || 28;
+    roads = {};
+    if (engine === null) {
+      if (data.googleKey) setupGoogle(data.googleKey); else setupLeaflet();
+    }
     var stops = (data.stops || []).map(function (s) { s.lat = Number(s.lat); s.lng = Number(s.lng); return s; });
     var withCoords = stops.filter(function (s) { return s.lat !== 0 || s.lng !== 0; });
     noCoords = stops.filter(function (s) { return s.lat === 0 && s.lng === 0; });
@@ -128,11 +230,7 @@ var GNCDeliveryMap = (function () {
     }
     highlighted = null;
     render(true);
-    if (map && (withCoords.length || data.warehouse)) {
-      var pts = withCoords.map(function (s) { return [s.lat, s.lng]; }).concat([[data.warehouse.lat, data.warehouse.lng]]);
-      map.fitBounds(pts, { padding: [40, 40] });
-      setTimeout(function () { map.invalidateSize(); }, 200);
-    }
+    fitMap();
   }
 
   function render(fit) {
@@ -162,7 +260,17 @@ var GNCDeliveryMap = (function () {
     var note = document.getElementById("gNote");
     note.innerHTML = "";
     if (!route.length && !noCoords.length) note.appendChild(el("div", "gnc-note", "No released order to deliver for this driver and date."));
-    if (noCoords.length) note.appendChild(el("div", "gnc-note", noCoords.length + " order(s) without GPS position: fill in Latitude and Longitude on the customer card."));
+    if (mapNote) note.appendChild(el("div", "gnc-note", mapNote));
+    if (noCoords.length) note.appendChild(el("div", "gnc-note", noCoords.length + " order(s) without GPS position: choose Find missing positions, or fill in Latitude and Longitude on the customer card."));
+    if (route.length) {
+      var rr = roads[seqKey(route)];
+      if (rr && rr.failed) note.appendChild(el("div", "gnc-note", "Google could not calculate the road route (" + rr.failed + "): estimated distances are shown."));
+      else note.appendChild(el("div", "gnc-note", road(route) ? "Distances and times use the Google Maps road route, without live traffic." : "Distances and times are estimates, not road directions."));
+    }
+    var nav = document.getElementById("gNav");
+    nav.disabled = !route.length || route.length > MAX_LINK_STOPS;
+    nav.title = route.length > MAX_LINK_STOPS ? "Too many stops for one link: use Navigate on each stop." : "";
+    document.getElementById("gGeo").style.display = geocoder && noCoords.length ? "" : "none";
     if (route.length) note.appendChild(el("div", "gnc-note" + (savedOrder ? " ok" : ""), savedOrder ? "This sequence is saved on the orders (Stop No.)." : "Sequence not saved yet: choose Save sequence."));
 
     // Liste des arrêts
@@ -191,6 +299,11 @@ var GNCDeliveryMap = (function () {
       var open = el("button", "gnc-open", "Open order"); open.type = "button";
       open.addEventListener("click", function (e) { e.stopPropagation(); invoke("OpenOrder", [s.orderNo]); });
       b.appendChild(open);
+      if (s.lat !== 0 || s.lng !== 0) {
+        var go = el("button", "gnc-open", "Navigate"); go.type = "button";
+        go.addEventListener("click", function (e) { e.stopPropagation(); invoke("OpenUrl", [stopUrl(s)]); });
+        b.appendChild(go);
+      }
       li.addEventListener("click", function () { highlighted = highlighted === s.orderNo ? null : s.orderNo; render(false); });
     }
     li.appendChild(b);
@@ -222,8 +335,65 @@ var GNCDeliveryMap = (function () {
     });
   }
 
+  // Demande à Google le trajet par la route d'une suite d'arrêts (une seule fois), puis redessine
+  function ensureRoad(seq) {
+    var key = seqKey(seq);
+    if (!directions || !seq.length || seq.length > MAX_GOOGLE_STOPS || roads[key]) return;
+    roads[key] = { pending: true };
+    var depot = { lat: data.warehouse.lat, lng: data.warehouse.lng };
+    directions.route({
+      origin: depot, destination: depot, optimizeWaypoints: false, travelMode: "DRIVING",
+      waypoints: seq.map(function (s) { return { location: { lat: s.lat, lng: s.lng }, stopover: true }; })
+    }, function (res, status) {
+      if (status === "OK") {
+        var r = res.routes[0], total = 0, legs = [];
+        r.legs.forEach(function (l) { total += l.distance.value; legs.push(l.duration.value / 60); });
+        roads[key] = { km: total / 1000, legs: legs, path: r.overview_path };
+      } else {
+        roads[key] = { failed: status };
+      }
+      render(false);
+    });
+  }
+
+  function renderGoogle(entry) {
+    gOverlays.forEach(function (o) { o.setMap(null); });
+    gOverlays = [];
+    var depot = { lat: data.warehouse.lat, lng: data.warehouse.lng };
+    function path(seq) {
+      var r = road(seq);
+      return r ? r.path : [depot].concat(seq.map(function (s) { return { lat: s.lat, lng: s.lng }; }), [depot]);
+    }
+    function add(o) { o.setMap(gmap); gOverlays.push(o); return o; }
+    function pin(position, label, color, title, large) {
+      return add(new google.maps.Marker({
+        position: position, title: title,
+        label: { text: label, color: "#ffffff", fontWeight: "bold", fontSize: "12px" },
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: large ? 16 : 13, fillColor: color, fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 2 }
+      }));
+    }
+    if (route.length) {
+      ensureRoad(route);
+      if (showEntry) {
+        ensureRoad(entry);
+        add(new google.maps.Polyline({
+          path: path(entry), strokeOpacity: 0,
+          icons: [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 1, strokeColor: "#c9867c", scale: 2 }, offset: "0", repeat: "12px" }]
+        }));
+      }
+      add(new google.maps.Polyline({ path: path(route), strokeColor: "#0e7c6b", strokeWeight: 4 }));
+    }
+    pin(depot, "S", "#33404d", data.warehouse.name);
+    route.forEach(function (s, i) {
+      var color = s.coldUnits > 0 ? "#2a7de1" : s.priority === "Very Urgent" ? "#c0392b" : s.priority === "Urgent" ? "#d9822b" : "#0e7c6b";
+      var m = pin({ lat: s.lat, lng: s.lng }, String(i + 1), color, (i + 1) + ". " + s.customer + " (" + s.priority + ")", highlighted === s.orderNo);
+      m.addListener("click", function () { highlighted = s.orderNo; render(false); });
+    });
+  }
+
   function renderMap(entry) {
-    if (!map) return;
+    if (engine === "google") { renderGoogle(entry); return; }
+    if (engine !== "leaflet") return;
     layers.clearLayers();
     var depot = [data.warehouse.lat, data.warehouse.lng];
     function line(seq) { return [depot].concat(seq.map(function (s) { return [s.lat, s.lng]; }), [depot]); }

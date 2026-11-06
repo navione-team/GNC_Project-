@@ -215,6 +215,68 @@ page 90008 "GNC Sales Role Center"
                     ToolTip = 'View the archived sales quotes, including quotes closed as failed sales.';
                 }
             }
+            // Lot 8 : rapports de ventes du FRD
+            group(GNCReports)
+            {
+                Caption = 'Reports';
+
+                action(ReportQuotedSales)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Quoted Sales';
+                    RunObject = report "GNC Quoted Sales";
+                    ToolTip = 'List the requests of the period with their status and amount.';
+                }
+                action(ReportProformaSales)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Proforma Sales';
+                    RunObject = report "GNC Proforma Sales";
+                    ToolTip = 'List the sales orders of the period that are not yet fully invoiced.';
+                }
+                action(ReportInvoicedSales)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Invoiced Sales';
+                    RunObject = report "GNC Invoiced Sales";
+                    ToolTip = 'List the posted sales invoices and credit memos of the period.';
+                }
+                action(ReportSalesByProduct)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Sales by Product';
+                    RunObject = report "GNC Sales by Product";
+                    ToolTip = 'Show the invoiced sales of the period by product.';
+                }
+                action(ReportSalesByCustomer)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Sales by Customer';
+                    RunObject = report "GNC Sales by Customer";
+                    ToolTip = 'Show the invoiced sales of the period by customer.';
+                }
+                action(ReportSalesByRegion)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Sales by Region';
+                    RunObject = report "GNC Sales by Region";
+                    ToolTip = 'Show the invoiced sales of the period by customer region.';
+                }
+                action(ReportSalesByPeriod)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Sales by Period';
+                    RunObject = report "GNC Sales by Period";
+                    ToolTip = 'Show the invoiced sales of the period by month.';
+                }
+                action(ReportSalespersonAchievement)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Salesperson Achievement';
+                    RunObject = report "GNC Salesperson Achievement";
+                    ToolTip = 'Compare the actual sales with the annual target of each salesperson.';
+                }
+            }
             group(GNCSetup)
             {
                 Caption = 'Setup';

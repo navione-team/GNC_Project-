@@ -20,6 +20,37 @@ codeunit 90056 "GNC Request Grouping Mgt."
         OrderLineTxt: Label '- %1 (%2): requests %3', Comment = '%1 = order no., %2 = customer name, %3 = list of request numbers';
         NothingToGroupMsg: Label 'There is no released request to group.';
         SkippedMsg: Label 'Not grouped because the salesperson has not been confirmed by PIN: %1.', Comment = '%1 = list of request numbers';
+        MustGroupErr: Label 'Request %1 must be grouped with request(s) %2 of the same customer, to create one sales order. Use Requests to Group.', Comment = '%1 = request number, %2 = list of request numbers';
+
+    // FRD 1.4 : Make Order individuel refusé si d'autres demandes validées sont à regrouper avec celle-ci.
+    // Le regroupement lui-même passe aussi par Make Order : il est reconnu grâce au codeunit 90044.
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Quote to Order", 'OnBeforeOnRun', '', false, false)]
+    local procedure CheckGroupOnBeforeMakeOrder(var SalesHeader: Record "Sales Header")
+    var
+        Request: Record "Sales Header";
+        GNCSalesSetup: Record "GNC Sales Setup";
+        GNCRequestContext: Codeunit "GNC Request Context";
+        GNCSalespersonPINMgt: Codeunit "GNC Salesperson PIN Mgt.";
+        OtherNos: List of [Code[20]];
+    begin
+        if SalesHeader."Document Type" <> SalesHeader."Document Type"::Quote then
+            exit;
+        if GNCRequestContext.GetGroupingRequest() = SalesHeader."No." then
+            exit;
+        GNCSalesSetup.GetSetup();
+        if GNCSalesSetup."Allow Individual Make Order" then
+            exit;
+
+        SetGroupFilters(Request, SalesHeader);
+        Request.SetFilter("No.", '<>%1', SalesHeader."No.");
+        if Request.FindSet() then
+            repeat
+                if GNCSalespersonPINMgt.IsSalespersonConfirmed(Request) then
+                    OtherNos.Add(Request."No.");
+            until Request.Next() = 0;
+        if OtherNos.Count() > 0 then
+            Error(MustGroupErr, SalesHeader."No.", ListToText(OtherNos));
+    end;
 
     // ---------- Actions de l'écran "Requests to Group" (page 90055) ----------
 
@@ -126,6 +157,7 @@ codeunit 90056 "GNC Request Grouping Mgt."
         GNCSalespersonPINMgt: Codeunit "GNC Salesperson PIN Mgt.";
         GNCBonusMgt: Codeunit "GNC Bonus Mgt.";
         GNCDeliveryMgt: Codeunit "GNC Delivery Mgt.";
+        GNCRequestContext: Codeunit "GNC Request Context";
         SalesQuoteToOrder: Codeunit "Sales-Quote to Order";
         GroupNos: List of [Code[20]];
         RequestNo: Code[20];
@@ -148,7 +180,9 @@ codeunit 90056 "GNC Request Grouping Mgt."
         //    Le bonus (lot 5) est reporté à la fin, pour être calculé sur les lignes cumulées
         Request.Get(Request."Document Type"::Quote, GroupNos.Get(1));
         GNCBonusMgt.PostponeBonusForRequest(Request."No.");
+        GNCRequestContext.SetGroupingRequest(Request."No.");
         SalesQuoteToOrder.Run(Request);
+        GNCRequestContext.SetGroupingRequest('');
         SalesQuoteToOrder.GetSalesOrderHeader(SalesOrderHeader);
 
         // 3. Les suivantes : leurs lignes sont ajoutées (ou cumulées) dans cette commande

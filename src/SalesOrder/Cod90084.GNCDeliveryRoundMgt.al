@@ -37,6 +37,8 @@ codeunit 90084 "GNC Delivery Round Mgt."
         Data.Add('capacity', Driver."Vehicle Capacity");
         Data.Add('refrigerated', Driver.Refrigerated);
         Data.Add('date', Format(RoundDate));
+        // Clé vide = carte OpenStreetMap et distances estimées
+        Data.Add('googleKey', GNCSalesSetup."Google Maps API Key");
 
         // Départ : heure du paramétrage, 06:30 par défaut
         StartTime := GNCSalesSetup."Round Start Time";
@@ -107,12 +109,41 @@ codeunit 90084 "GNC Delivery Round Mgt."
         Stop.Add('customer', SalesHeader."Ship-to Name");
         Stop.Add('address', SalesHeader."Ship-to Address");
         Stop.Add('city', SalesHeader."Ship-to City");
+        Stop.Add('country', SalesHeader."Ship-to Country/Region Code");
         Stop.Add('priority', Format(SalesHeader."GNC Delivery Priority"));
         Stop.Add('lat', Latitude);
         Stop.Add('lng', Longitude);
         Stop.Add('units', Units);
         Stop.Add('coldUnits', ColdUnits);
         Stop.Add('stopNo', SalesHeader."GNC Stop No.");
+    end;
+
+    // Position trouvée par Google : enregistrée sur l'adresse de livraison de la commande, sinon sur le client.
+    // Les nombres arrivent au format JavaScript (point décimal), d'où le format 9 de Evaluate.
+    procedure SavePosition(OrderNo: Text; LatitudeText: Text; LongitudeText: Text)
+    var
+        Customer: Record Customer;
+        ShipToAddress: Record "Ship-to Address";
+        SalesHeader: Record "Sales Header";
+        Latitude: Decimal;
+        Longitude: Decimal;
+    begin
+        if not SalesHeader.Get(SalesHeader."Document Type"::Order, CopyStr(OrderNo, 1, MaxStrLen(SalesHeader."No."))) then
+            exit;
+        if not (Evaluate(Latitude, LatitudeText, 9) and Evaluate(Longitude, LongitudeText, 9)) then
+            exit;
+        if SalesHeader."Ship-to Code" <> '' then
+            if ShipToAddress.Get(SalesHeader."Sell-to Customer No.", SalesHeader."Ship-to Code") then begin
+                ShipToAddress."GNC Latitude" := Latitude;
+                ShipToAddress."GNC Longitude" := Longitude;
+                ShipToAddress.Modify();
+                exit;
+            end;
+        if Customer.Get(SalesHeader."Sell-to Customer No.") then begin
+            Customer."GNC Latitude" := Latitude;
+            Customer."GNC Longitude" := Longitude;
+            Customer.Modify();
+        end;
     end;
 
     // Ordre choisi sur la carte : "101033,101032,..." → Stop No. 1, 2, ... sur les commandes

@@ -10,6 +10,7 @@ codeunit 90019 "GNC Sales Quote Mgt."
         QuoteClosedMsg: Label 'Quote %1 has been closed as failed and archived. You can find it in Sales Quote Archives.', Comment = '%1 = quote number';
         RestoreQst: Label 'Do you want to restore closed quote %1 (version %2)?', Comment = '%1 = quote number, %2 = archive version';
         QuoteRestoredMsg: Label 'Quote %1 has been restored.', Comment = '%1 = quote number';
+        QuoteNotReleasedErr: Label 'Request %1 must be released before you can create a sales order from it. Its current status is %2.', Comment = '%1 = quote number, %2 = status';
 
     // Appelée par l'action "Close as Failed" de la fiche devis. Renvoie true si le devis a été clôturé.
     procedure CloseQuoteAsFailed(var SalesHeader: Record "Sales Header"): Boolean
@@ -48,6 +49,17 @@ codeunit 90019 "GNC Sales Quote Mgt."
     begin
         if SalesHeader."GNC Closed" then
             IsHandled := true;
+    end;
+
+    // FRD (Sales Order, règle 1) : une commande ne vient que d'une demande validée.
+    // Make Order (fiche et liste) et le regroupement passent ici : seul le statut Released est accepté.
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Quote to Order", 'OnBeforeOnRun', '', false, false)]
+    local procedure CheckReleasedOnBeforeMakeOrder(var SalesHeader: Record "Sales Header")
+    begin
+        if SalesHeader."Document Type" <> SalesHeader."Document Type"::Quote then
+            exit;
+        if SalesHeader.Status <> SalesHeader.Status::Released then
+            Error(QuoteNotReleasedErr, SalesHeader."No.", SalesHeader.Status);
     end;
 
     // Devis transformé en commande ("Make Order") : juste avant son archivage, on le marque Won.
@@ -97,6 +109,22 @@ codeunit 90019 "GNC Sales Quote Mgt."
         ClosedVersion.SetRange("Doc. No. Occurrence", SalesHeaderArchive."Doc. No. Occurrence");
         ClosedVersion.SetRange("GNC Closed", true);
         exit(not ClosedVersion.IsEmpty());
+    end;
+
+    // Résultat définitif d'une demande archivée : seulement la dernière version, et seulement si la
+    // demande n'a pas été restaurée (une demande clôturée, restaurée puis reclôturée a 2 versions Failed).
+    procedure IsLastQuoteOutcome(SalesHeaderArchive: Record "Sales Header Archive"): Boolean
+    var
+        LaterVersion: Record "Sales Header Archive";
+        SalesHeader: Record "Sales Header";
+    begin
+        if SalesHeader.Get(SalesHeaderArchive."Document Type", SalesHeaderArchive."No.") then
+            exit(false);
+        LaterVersion.SetRange("Document Type", SalesHeaderArchive."Document Type");
+        LaterVersion.SetRange("No.", SalesHeaderArchive."No.");
+        LaterVersion.SetRange("Doc. No. Occurrence", SalesHeaderArchive."Doc. No. Occurrence");
+        LaterVersion.SetFilter("Version No.", '>%1', SalesHeaderArchive."Version No.");
+        exit(LaterVersion.IsEmpty());
     end;
 
     local procedure RestoreClosedQuote(var SalesHeaderArchive: Record "Sales Header Archive")

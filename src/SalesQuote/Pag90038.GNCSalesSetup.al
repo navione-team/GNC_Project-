@@ -21,6 +21,14 @@ page 90038 "GNC Sales Setup"
                 {
                     ToolTip = 'Specifies if the quote is always archived with the status Won when it is converted to an order (Make Order), whatever the Archive Quotes setting in Sales & Receivables Setup.';
                 }
+                field("Allow Individual Make Order"; Rec."Allow Individual Make Order")
+                {
+                    ToolTip = 'Specifies if Make Order is allowed on a request that can be grouped with other released requests. If not selected, these requests must be converted from Requests to Group, so that the customer receives one sales order.';
+                }
+                field("Require Salesperson Target"; Rec."Require Salesperson Target")
+                {
+                    ToolTip = 'Specifies if a salesperson must have an annual target for the year of the work date before entering a PIN on a request.';
+                }
             }
             // Lot 4 : écran "Requests to Group"
             group(RequestGrouping)
@@ -49,6 +57,10 @@ page 90038 "GNC Sales Setup"
                 {
                     ToolTip = 'Specifies if a line discount entered manually above the suggested discount is limited by the Max Line Discount % of the user in User Setup.';
                 }
+                field("Exceptional Discount Approval"; Rec."Exceptional Discount Approval")
+                {
+                    ToolTip = 'Specifies if a discount above the maximum of the user is accepted on requests and orders, but must be approved before the document can be released. Used with Control Manual Discount.';
+                }
             }
             // Lot 7 : plan de livraison
             group(Delivery)
@@ -58,6 +70,10 @@ page 90038 "GNC Sales Setup"
                 field("Driver Optional on Shipment"; Rec."Driver Optional on Shipment")
                 {
                     ToolTip = 'Specifies if a sales order can be shipped without a driver (for example when the customer collects the goods). If not selected, a driver is required to post the shipment.';
+                }
+                field("Google Maps API Key"; Rec."Google Maps API Key")
+                {
+                    ToolTip = 'Specifies the Google Maps key used by the delivery round for the map, road routes and missing positions. Leave empty to use OpenStreetMap and estimated distances.';
                 }
                 field("Warehouse Latitude"; Rec."Warehouse Latitude")
                 {

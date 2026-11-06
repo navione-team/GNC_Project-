@@ -6,6 +6,9 @@
 // 2. Contrôle de la remise saisie à la main (si "Control Manual Discount" est coché dans GNC Sales Setup) :
 //    refusée si elle dépasse à la fois la remise proposée et la remise maximum de l'utilisateur
 //    ("Max Line Discount %" dans User Setup ; pas de ligne User Setup = 0).
+// 3. Remises exceptionnelles (REQ-DB-017, si "Exceptional Discount Approval" est coché) : sur une demande ou
+//    une commande, la remise au-dessus du maximum est acceptée, mais le document ne peut pas être
+//    Released tant qu'un utilisateur autorisé (User Setup) ne l'a pas approuvée. Le workflow standard reste à configurer.
 // Les remises ajoutées par le code (bonus, remise additionnelle, MOH) ne sont pas contrôlées.
 codeunit 90069 "GNC Discount Mgt."
 {
@@ -16,6 +19,10 @@ codeunit 90069 "GNC Discount Mgt."
         AllCustomersItemTxt: Label 'All customers + item';
         AllCustomersCategoryTxt: Label 'All customers + item category';
         MaxDiscountErr: Label 'You cannot give a line discount of %1%. The maximum allowed for you is %2% (suggested discount %3%, your maximum in User Setup %4%).', Comment = '%1 = entered discount, %2 = allowed discount, %3 = suggested discount, %4 = user maximum';
+        ApprovalRequiredErr: Label 'Document %1 has exceptional line discounts that must be approved before it can be released. Line %2: %3%.', Comment = '%1 = document number, %2 = line number, %3 = discount';
+        NotApproverErr: Label 'You are not allowed to approve exceptional discounts. Check Approve Exceptional Discounts in User Setup.';
+        NothingToApproveMsg: Label 'There is no exceptional discount to approve on this document.';
+        ApproveQst: Label 'Do you want to approve %1 exceptional line discount(s)?', Comment = '%1 = number of lines';
 
     // ---------- 1. Proposition de la remise ----------
 
@@ -27,8 +34,11 @@ codeunit 90069 "GNC Discount Mgt."
     begin
         if not IsDiscountDocument(SalesLine) then
             exit;
-        if FindDiscount(SalesHeader, SalesLine, DiscountPct) then
+        if FindDiscount(SalesHeader, SalesLine, DiscountPct) then begin
             SalesLine."Line Discount %" := DiscountPct; // les montants sont recalculés juste après par le standard
+            SalesLine."GNC Exceptional Discount" := false;
+            SalesLine."GNC Discount Approved By" := '';
+        end;
     end;
 
     // Remise GNC applicable à la ligne (false = aucune règle)
@@ -59,7 +69,7 @@ codeunit 90069 "GNC Discount Mgt."
         for i := 1 to 2 do
             for j := 0 to 2 do begin
                 DiscountType := "GNC Discount Type".FromInteger(j);
-                if FindValidRule(CustomerNos[i], DiscountType, GetRuleNo(DiscountType, Item), RuleDate, RulePct) then begin
+                if FindValidRule(CustomerNos[i], DiscountType, GetRuleNo(DiscountType, Item), RuleDate, SalesLine.Quantity, RulePct) then begin
                     if GNCSalesSetup."Discount Priority" = GNCSalesSetup."Discount Priority"::"Most Specific" then begin
                         DiscountPct := RulePct;
                         exit(true);
@@ -75,7 +85,7 @@ codeunit 90069 "GNC Discount Mgt."
 
     // Simulateur (page 90096) : les 5 niveaux de précision, la règle trouvée à chaque niveau et le gagnant.
     // Même ordre et même règle de priorité que FindDiscount. WinnerIndex = -1 s'il n'y a aucune règle.
-    procedure GetDiscountLadder(CustomerNo: Code[20]; ItemNo: Code[20]; RuleDate: Date; var Ladder: JsonArray; var WinnerIndex: Integer; var DiscountPct: Decimal)
+    procedure GetDiscountLadder(CustomerNo: Code[20]; ItemNo: Code[20]; RuleDate: Date; Quantity: Decimal; var Ladder: JsonArray; var WinnerIndex: Integer; var DiscountPct: Decimal)
     var
         Item: Record Item;
         GNCSalesSetup: Record "GNC Sales Setup";
@@ -106,7 +116,7 @@ codeunit 90069 "GNC Discount Mgt."
                 if not ((i = 2) and (j = 2)) then begin
                     DiscountType := "GNC Discount Type".FromInteger(j);
                     RulePct := 0;
-                    Found := FindValidRule(CustomerNos[i], DiscountType, GetRuleNo(DiscountType, Item), RuleDate, RulePct);
+                    Found := FindValidRule(CustomerNos[i], DiscountType, GetRuleNo(DiscountType, Item), RuleDate, Quantity, RulePct);
                     Clear(Level);
                     Level.Add('label', Labels[Index + 1]);
                     Level.Add('found', Found);
@@ -134,8 +144,8 @@ codeunit 90069 "GNC Discount Mgt."
         exit(''); // All Items
     end;
 
-    // Règle valable à la date ; s'il y en a plusieurs, la plus récente (date de début la plus grande)
-    local procedure FindValidRule(CustomerNo: Code[20]; DiscountType: Enum "GNC Discount Type"; No: Code[20]; RuleDate: Date; var DiscountPct: Decimal): Boolean
+    // Règle valable à la date et pour la quantité ; s'il y en a plusieurs, la plus récente (date de début la plus grande)
+    local procedure FindValidRule(CustomerNo: Code[20]; DiscountType: Enum "GNC Discount Type"; No: Code[20]; RuleDate: Date; Quantity: Decimal; var DiscountPct: Decimal): Boolean
     var
         DiscountSetup: Record "GNC Discount Setup";
     begin
@@ -150,7 +160,9 @@ codeunit 90069 "GNC Discount Mgt."
         DiscountSetup.SetFilter("Starting Date", '..%1', RuleDate);
         if DiscountSetup.FindLast() then
             repeat
-                if (DiscountSetup."Ending Date" = 0D) or (DiscountSetup."Ending Date" >= RuleDate) then begin
+                if ((DiscountSetup."Ending Date" = 0D) or (DiscountSetup."Ending Date" >= RuleDate)) and
+                   (Quantity >= DiscountSetup."Minimum Quantity")
+                then begin
                     DiscountPct := DiscountSetup."Discount %";
                     exit(true);
                 end;
@@ -190,7 +202,7 @@ codeunit 90069 "GNC Discount Mgt."
             CheckManualDiscount(Rec);
     end;
 
-    local procedure CheckManualDiscount(SalesLine: Record "Sales Line")
+    local procedure CheckManualDiscount(var SalesLine: Record "Sales Line")
     var
         GNCSalesSetup: Record "GNC Sales Setup";
         UserSetup: Record "User Setup";
@@ -215,7 +227,59 @@ codeunit 90069 "GNC Discount Mgt."
         AllowedPct := SuggestedPct;
         if UserMaxPct > AllowedPct then
             AllowedPct := UserMaxPct;
+
+        // Toute modification de la remise annule une approbation précédente
+        SalesLine."GNC Exceptional Discount" := false;
+        SalesLine."GNC Discount Approved By" := '';
         if SalesLine."Line Discount %" > AllowedPct then
-            Error(MaxDiscountErr, SalesLine."Line Discount %", AllowedPct, SuggestedPct, UserMaxPct);
+            if GNCSalesSetup."Exceptional Discount Approval" and
+               (SalesLine."Document Type" in [SalesLine."Document Type"::Quote, SalesLine."Document Type"::Order])
+            then
+                SalesLine."GNC Exceptional Discount" := true
+            else
+                Error(MaxDiscountErr, SalesLine."Line Discount %", AllowedPct, SuggestedPct, UserMaxPct);
+    end;
+
+    // ---------- 3. Remises exceptionnelles ----------
+
+    // Release manuel, et Release automatique à la validation : refusé s'il reste une remise non approuvée
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Release Sales Document", 'OnBeforeReleaseSalesDoc', '', false, false)]
+    local procedure CheckApprovalOnBeforeReleaseSalesDoc(var SalesHeader: Record "Sales Header")
+    var
+        GNCSalesSetup: Record "GNC Sales Setup";
+        SalesLine: Record "Sales Line";
+    begin
+        GNCSalesSetup.GetSetup();
+        if not GNCSalesSetup."Exceptional Discount Approval" then
+            exit;
+        SetUnapprovedFilters(SalesLine, SalesHeader);
+        if SalesLine.FindFirst() then
+            Error(ApprovalRequiredErr, SalesHeader."No.", SalesLine."Line No.", SalesLine."Line Discount %");
+    end;
+
+    // Actions des fiches demande et commande
+    procedure ApproveExceptionalDiscounts(SalesHeader: Record "Sales Header")
+    var
+        SalesLine: Record "Sales Line";
+        UserSetup: Record "User Setup";
+    begin
+        if not UserSetup.Get(UserId()) or not UserSetup."GNC Approve Excep. Discounts" then
+            Error(NotApproverErr);
+        SetUnapprovedFilters(SalesLine, SalesHeader);
+        if SalesLine.IsEmpty() then begin
+            Message(NothingToApproveMsg);
+            exit;
+        end;
+        if not Confirm(ApproveQst, true, SalesLine.Count()) then
+            exit;
+        SalesLine.ModifyAll("GNC Discount Approved By", CopyStr(UserId(), 1, MaxStrLen(SalesLine."GNC Discount Approved By")));
+    end;
+
+    local procedure SetUnapprovedFilters(var SalesLine: Record "Sales Line"; SalesHeader: Record "Sales Header")
+    begin
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        SalesLine.SetRange("GNC Exceptional Discount", true);
+        SalesLine.SetRange("GNC Discount Approved By", '');
     end;
 }

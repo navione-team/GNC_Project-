@@ -1,7 +1,8 @@
 // Traçabilité demande → commande → expédition → facture, par ligne (FRD 1.5, REQ-SR-006, REQ-SO-007).
 // - Make Order : chaque ligne de la commande reçoit le n° de la Request Collection (devis)
 //   et le commercial confirmé par son PIN.
-// - Ligne ajoutée à la main sur un document (hors devis) : commercial de l'en-tête par défaut.
+// - Ligne ajoutée à la main sur un document (hors devis) : commercial responsable de l'article
+//   pour ce client (table 90032) s'il existe, sinon commercial de l'en-tête.
 // - Détail demande → ligne de commande (table 90058, lot 4), gardé après la validation.
 // Ensuite, le standard recopie ces champs (mêmes numéros) sur les lignes expédiées, facturées et d'avoir.
 // Aucune modification du code standard : uniquement des event subscribers.
@@ -77,12 +78,14 @@ codeunit 90054 "GNC Request Traceability"
         GroupedRequestLine.DeleteAll();
     end;
 
-    // Ligne ajoutée à la main (commande, facture, avoir...) : on propose le commercial de l'en-tête.
+    // Ligne ajoutée à la main (commande, facture, avoir...) : on propose le commercial responsable, sinon celui de l'en-tête.
     // Pas sur le devis : là, le commercial est sur l'en-tête et les lignes sont remplies au Make Order.
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'No.', false, false)]
     local procedure SetHeaderSalespersonOnAfterValidateNo(var Rec: Record "Sales Line"; var xRec: Record "Sales Line"; CurrFieldNo: Integer)
     var
         SalesHeader: Record "Sales Header";
+        GNCRequestCollectionMgt: Codeunit "GNC Request Collection Mgt.";
+        ResponsibleCode: Code[20];
     begin
         if Rec."Document Type" = Rec."Document Type"::Quote then
             exit;
@@ -92,6 +95,11 @@ codeunit 90054 "GNC Request Traceability"
             exit;
         if not SalesHeader.Get(Rec."Document Type", Rec."Document No.") then
             exit;
-        Rec."GNC Salesperson Code" := SalesHeader."Salesperson Code";
+        if (Rec.Type = Rec.Type::Item) and
+           GNCRequestCollectionMgt.FindResponsibleSalesperson(SalesHeader."Sell-to Customer No.", Rec."No.", ResponsibleCode)
+        then
+            Rec."GNC Salesperson Code" := ResponsibleCode
+        else
+            Rec."GNC Salesperson Code" := SalesHeader."Salesperson Code";
     end;
 }

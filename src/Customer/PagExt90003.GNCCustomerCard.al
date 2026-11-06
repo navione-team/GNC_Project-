@@ -17,8 +17,12 @@ pageextension 90003 "GNC Customer Card" extends "Customer Card"
         {
             group(GNCClassification)
             {
-                Caption = 'GNC Classification';
-
+                Caption = 'GNC Extension';
+                field("Customer Sales Unit"; Rec."Customer Sales Unit")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the unit of measure proposed by default on the sales lines of this customer. It is used only for items that have this unit in their item units of measure; otherwise the sales unit of measure of the item is used.';
+                }
                 field("GNC Customer Type"; Rec."GNC Customer Type")
                 {
                     ApplicationArea = All;
@@ -125,6 +129,17 @@ pageextension 90003 "GNC Customer Card" extends "Customer Card"
                 RunPageView = where("GNC Quote Status" = const(Failed));
                 RunPageLink = "Sell-to Customer No." = field("No.");
             }
+            // Historique des bonus (FRD § 9.1) : lignes bonus expédiées à ce client
+            action(GNCBonusHistory)
+            {
+                ApplicationArea = All;
+                Caption = 'Bonus History';
+                Image = History;
+                ToolTip = 'View the free bonus quantities shipped to the customer.';
+                RunObject = page "Posted Sales Shipment Lines";
+                RunPageView = where("GNC Bonus Line" = const(true));
+                RunPageLink = "Sell-to Customer No." = field("No.");
+            }
             // Commerciaux responsables de ce client, par article ou catégorie (exigence 1.7)
             action(GNCSalespersonAssignments)
             {
@@ -145,6 +160,9 @@ pageextension 90003 "GNC Customer Card" extends "Customer Card"
             {
             }
             actionref(GNCFailedSales_Promoted; GNCFailedSales)
+            {
+            }
+            actionref(GNCBonusHistory_Promoted; GNCBonusHistory)
             {
             }
             actionref(GNCSalespersonAssignments_Promoted; GNCSalespersonAssignments)

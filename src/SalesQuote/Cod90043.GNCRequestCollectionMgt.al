@@ -12,6 +12,7 @@ codeunit 90043 "GNC Request Collection Mgt."
     var
         CustomerNotInPortfolioErr: Label 'Customer %1 is not in the portfolio of salesperson %2.', Comment = '%1 = customer no., %2 = salesperson code';
         ItemNotAllowedErr: Label 'Item %1 (category %2) is not assigned to salesperson %3 for customer %4. Check the salesperson assignments.', Comment = '%1 = item no., %2 = item category, %3 = salesperson code, %4 = customer no.';
+        ResponsibleSalespersonMsg: Label 'For customer %1, salesperson %2 is responsible for item %3.', Comment = '%1 = customer no., %2 = salesperson code, %3 = item no.';
 
     // ---------- Clients ----------
 
@@ -228,5 +229,42 @@ codeunit 90043 "GNC Request Collection Mgt."
         if not SalesHeader.Get(Rec."Document Type", Rec."Document No.") then
             exit;
         CheckItemAllowed(SalesHeader, SalesHeader."GNC PIN Salesperson Code", Rec);
+        if CurrFieldNo = Rec.FieldNo("No.") then
+            SuggestResponsibleSalesperson(SalesHeader, Rec);
+    end;
+
+    // FRD remarque du 1.7 : commercial responsable de l'article pour ce client, selon la table 90032.
+    // L'article affecté directement passe avant sa catégorie (une catégorie = un seul commercial par client).
+    procedure FindResponsibleSalesperson(CustomerNo: Code[20]; ItemNo: Code[20]; var SalespersonCode: Code[20]): Boolean
+    var
+        Item: Record Item;
+        Assignment: Record "GNC Cust. Salesperson Assign.";
+    begin
+        if Assignment.Get(CustomerNo, Assignment.Type::Item, ItemNo) then begin
+            SalespersonCode := Assignment."Salesperson Code";
+            exit(true);
+        end;
+        if Item.Get(ItemNo) and (Item."Item Category Code" <> '') then
+            if Assignment.Get(CustomerNo, Assignment.Type::"Item Category", Item."Item Category Code") then begin
+                SalespersonCode := Assignment."Salesperson Code";
+                exit(true);
+            end;
+        exit(false);
+    end;
+
+    // Sur la demande, le commercial reste celui du PIN : on signale seulement le responsable s'il est différent
+    local procedure SuggestResponsibleSalesperson(SalesHeader: Record "Sales Header"; SalesLine: Record "Sales Line")
+    var
+        ResponsibleNotification: Notification;
+        ResponsibleCode: Code[20];
+    begin
+        if not GuiAllowed() or (SalesLine.Type <> SalesLine.Type::Item) then
+            exit;
+        if not FindResponsibleSalesperson(SalesHeader."Sell-to Customer No.", SalesLine."No.", ResponsibleCode) then
+            exit;
+        if ResponsibleCode = SalesHeader."GNC PIN Salesperson Code" then
+            exit;
+        ResponsibleNotification.Message(StrSubstNo(ResponsibleSalespersonMsg, SalesHeader."Sell-to Customer No.", ResponsibleCode, SalesLine."No."));
+        ResponsibleNotification.Send();
     end;
 }
